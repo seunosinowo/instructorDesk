@@ -1,0 +1,42 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm install
+      - name: Run TypeScript checks
+        run: npx tsc --noEmit
+      - name: Start PostgreSQL
+        uses: harmon758/postgresql-action@v1
+        with:
+          postgresql version: '13'
+          postgresql db: 'teachersdb'
+          postgresql user: 'postgres'
+          postgresql password: 'postgres'
+      - name: Set up environment variables
+        run: |
+          echo "DB_NAME=teachersdb" >> $GITHUB_ENV
+          echo "DB_USER=postgres" >> $GITHUB_ENV
+          echo "DB_PASSWORD=postgres" >> $GITHUB_ENV
+          echo "DB_HOST=localhost" >> $GITHUB_ENV
+          echo "DB_PORT=5432" >> $GITHUB_ENV
+          echo "JWT_SECRET=test_secret" >> $GITHUB_ENV
+          echo "CLOUDINARY_CLOUD_NAME=test" >> $GITHUB_ENV
+          echo "CLOUDINARY_API_KEY=test" >> $GITHUB_ENV
+          echo "CLOUDINARY_API_SECRET=test" >> $GITHUB_ENV
+      - name: Run tests
+        run: npm test
