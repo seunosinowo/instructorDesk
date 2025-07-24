@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
-import Teacher from '../models/teacher.model';
-import User from '../models/user.model';
+import { Teacher } from '../models/teacher.model';
+import { User } from '../models/user.model';
 import { v4 as uuidv4 } from 'uuid';
 
 export const createTeacherProfile = [
@@ -14,7 +14,7 @@ export const createTeacherProfile = [
         return res.status(400).json({ errors: errors.array() });
       }
 
-      const { subject, experience } = req.body;
+      const { subject, subjects, experience, qualifications } = req.body;
       const userId = req.user.id;
 
       const existingProfile = await Teacher.findOne({ where: { userId } });
@@ -23,10 +23,10 @@ export const createTeacherProfile = [
       }
 
       const teacher = await Teacher.create({
-        id: uuidv4(),
         userId,
-        subject,
+        subjects,
         experience,
+        qualifications,
       });
 
       res.status(201).json(teacher);

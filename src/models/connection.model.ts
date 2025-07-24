@@ -1,33 +1,60 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
-import User from './user.model';
-import { Op } from 'sequelize';
+import { User } from './user.model';
 
-const Connection = sequelize.define('Connection', {
+interface ConnectionAttributes {
+  id: string;
+  userId1: string;
+  userId2: string;
+  createdAt?: Date;
+  status?: string; // Added status property
+}
+
+interface ConnectionCreationAttributes extends Optional<ConnectionAttributes, 'id' | 'createdAt'> {}
+
+class Connection extends Model<ConnectionAttributes, ConnectionCreationAttributes> implements ConnectionAttributes {
+  public id!: string;
+  public userId1!: string;
+  public userId2!: string;
+  public createdAt!: Date;
+  public status?: string; // Added status property
+}
+
+Connection.init({
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
+    primaryKey: true
   },
-  requesterId: {
+  userId1: {
     type: DataTypes.UUID,
-    allowNull: false,
-    references: { model: User, key: 'id' },
+    references: {
+      model: User,
+      key: 'id'
+    },
+    allowNull: false
   },
-  receiverId: {
+  userId2: {
     type: DataTypes.UUID,
-    allowNull: false,
-    references: { model: User, key: 'id' },
+    references: {
+      model: User,
+      key: 'id'
+    },
+    allowNull: false
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   },
   status: {
-    type: DataTypes.ENUM('pending', 'accepted', 'rejected'),
-    allowNull: false,
-    defaultValue: 'pending',
-  },
+    type: DataTypes.STRING,
+    allowNull: true
+  }
+}, {
+  sequelize,
+  tableName: 'Connections'
 });
 
-Connection.belongsTo(User, { foreignKey: 'requesterId', as: 'Requester' });
-Connection.belongsTo(User, { foreignKey: 'receiverId', as: 'Receiver' });
+User.belongsToMany(User, { through: Connection, as: 'connections', foreignKey: 'userId1' });
 
-export default Connection;
-export { Op };
+export { Connection };

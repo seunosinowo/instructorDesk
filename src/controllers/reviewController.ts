@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { body, query, validationResult } from 'express-validator';
-import Review from '../models/review.model';
-import Teacher from '../models/teacher.model';
-import User from '../models/user.model';
+import { Review } from '../models/review.model';
+import { Teacher } from '../models/teacher.model';
+import { User } from '../models/user.model';
 import { v4 as uuidv4 } from 'uuid';
 
 export const createReview = [
@@ -25,7 +25,7 @@ export const createReview = [
       }
 
       const review = await Review.create({
-        id: uuidv4(),
+        // id is auto-incremented
         userId,
         teacherId,
         rating,
@@ -50,8 +50,12 @@ export const getReviews = [
       }
 
       const { teacherId } = req.query;
+      if (Array.isArray(teacherId) || typeof teacherId !== 'string' || isNaN(Number(teacherId))) {
+        return res.status(400).json({ error: 'Invalid teacherId' });
+      }
+      const numericTeacherId = parseInt(teacherId, 10);
       const reviews = await Review.findAll({
-        where: { teacherId },
+        where: { teacherId: numericTeacherId },
         include: [{ model: User, attributes: ['name', 'profilePicture'] }],
       });
       res.json(reviews);

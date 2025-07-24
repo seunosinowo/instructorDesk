@@ -1,7 +1,9 @@
 import request from 'supertest';
-import { app, sequelize } from '../src/server';
+import app from '../src/server';
+import sequelize from '../src/config/database';
 import dotenv from 'dotenv';
 import path from 'path';
+import { User } from '../src/models/user.model';
 
 // Load .env for tests
 process.env.NODE_ENV = 'test';
@@ -27,59 +29,45 @@ describe('Auth API', () => {
   it('should register a user', async () => {
     const res = await request(app)
       .post('/api/auth/register')
-      .field('email', 'test1@example.com')
-      .field('password', 'password123')
-      .field('role', 'student')
-      .field('name', 'Testing User')
-      .field('bio', 'Testing bio');
+      .send({ email: 'test1@example.com', password: 'password123', role: 'student', name: 'Testing User', bio: 'Testing bio' });
     expect(res.status).toBe(201);
-    expect(res.body).toHaveProperty('userId');
+    expect(res.body.message).toBe('Registration successful. Check your email for confirmation.');
   });
 
-  it('should login a user', async () => {
-    await request(app)
-      .post('/api/auth/register')
-      .field('email', 'test2@example.com')
-      .field('password', 'password123')
-      .field('role', 'student')
-      .field('name', 'Test User')
-      .field('bio', 'Test bio');
-    const res = await request(app)
-      .post('/api/auth/login')
-      .send({ email: 'test2@example.com', password: 'password123' });
-    expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('token');
-    expect(res.body).toHaveProperty('userId');
-    expect(res.body).toHaveProperty('role', 'student');
+it('should login a user', async () => {
+  await User.create({
+    email: 'test2@example.com',
+    password: 'password123',
+    role: 'student',
+    name: 'Test User',
+    bio: 'Test bio',
+    emailConfirmed: true,
   });
+  const res = await request(app)
+    .post('/api/auth/login')
+    .send({ email: 'test2@example.com', password: 'password123' });
+  expect(res.status).toBe(200);
+  expect(res.body).toHaveProperty('token');
+  expect(res.body.user).toHaveProperty('id');
+  expect(res.body.user).toHaveProperty('role', 'student');
+});
 
   it('should fail with invalid email', async () => {
     const res = await request(app)
       .post('/api/auth/register')
-      .field('email', 'invalid')
-      .field('password', 'password123')
-      .field('role', 'student')
-      .field('name', 'Test User');
+      .send({ email: 'invalid', password: 'password123', role: 'student', name: 'Test User' });
     expect(res.status).toBe(400);
-    expect(res.body.errors).toContainEqual(
-      expect.objectContaining({ msg: 'Invalid email format' })
-    );
+    expect(res.body.errors).toContainEqual(expect.objectContaining({ msg: 'Invalid email format' }));
   });
 
   it('should fail with duplicate email', async () => {
     await request(app)
       .post('/api/auth/register')
-      .field('email', 'test3@example.com')
-      .field('password', 'password123')
-      .field('role', 'student')
-      .field('name', 'Test User');
+      .send({ email: 'test3@example.com', password: 'password123', role: 'student', name: 'Test User' });
     const res = await request(app)
       .post('/api/auth/register')
-      .field('email', 'test3@example.com')
-      .field('password', 'password123')
-      .field('role', 'student')
-      .field('name', 'Test User');
+      .send({ email: 'test3@example.com', password: 'password123', role: 'student', name: 'Test User' });
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty('error', 'Email already exists');
+    expect(res.body.message).toBe('User already exists'); // Matches authRoutes.ts response
   });
 });

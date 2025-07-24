@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { body, query, validationResult } from 'express-validator';
-import Comment from '../models/comment.model';
-import Post from '../models/post.model';
-import User from '../models/user.model';
+import { Comment } from '../models/comment.model';
+import { Post } from '../models/post.model';
+import { User } from '../models/user.model';
 import { v4 as uuidv4 } from 'uuid';
 
 export const createComment = [
@@ -17,16 +17,16 @@ export const createComment = [
 
       const { postId, content } = req.body;
       const userId = req.user.id;
+      const numericPostId = typeof postId === 'string' ? parseInt(postId, 10) : postId;
 
-      const post = await Post.findByPk(postId);
+      const post = await Post.findByPk(numericPostId);
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
       }
 
       const comment = await Comment.create({
-        id: uuidv4(),
         userId,
-        postId,
+        postId: numericPostId,
         content,
       });
 
@@ -48,8 +48,12 @@ export const getComments = [
       }
 
       const { postId } = req.query;
+      if (Array.isArray(postId) || typeof postId !== 'string' || isNaN(Number(postId))) {
+        return res.status(400).json({ error: 'Invalid postId' });
+      }
+      const numericPostId = parseInt(postId, 10);
       const comments = await Comment.findAll({
-        where: { postId },
+        where: { postId: numericPostId },
         include: [{ model: User, attributes: ['name', 'profilePicture'] }],
       });
       res.json(comments);
