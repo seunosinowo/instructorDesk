@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
-import Post from '../models/post.model';
-import User from '../models/user.model';
+import { Post } from '../models/post.model';
+import { User } from '../models/user.model';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -24,10 +24,8 @@ export const createPost = [
       }
 
       const post = await Post.create({
-        id: uuidv4(),
         userId,
         content,
-        image,
       });
 
       res.status(201).json(post);

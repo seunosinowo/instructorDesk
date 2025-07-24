@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
-import Like from '../models/like.model';
-import Post from '../models/post.model';
+import { Like } from '../models/like.model';
+import { Post } from '../models/post.model';
 import { v4 as uuidv4 } from 'uuid';
 
 export const likePost = [
@@ -27,7 +27,6 @@ export const likePost = [
       }
 
       const like = await Like.create({
-        id: uuidv4(),
         userId,
         postId,
       });

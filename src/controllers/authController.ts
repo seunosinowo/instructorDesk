@@ -3,7 +3,7 @@ import { body, validationResult } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import User from '../models/user.model';
+import { User } from '../models/user.model';
 import { uploadToCloudinary } from '../utils/cloudinary';
 
 export const register = [
@@ -33,13 +33,11 @@ export const register = [
       }
 
       const user = await User.create({
-        id: uuidv4(),
         email,
         password: hashedPassword,
         role,
         name,
         bio,
-        profilePicture,
       });
 
       
