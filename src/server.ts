@@ -1,24 +1,37 @@
+import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 dotenv.config();
-import app from './app';
+
 import sequelize from './config/database';
+import authRoutes from './routes/authRoutes';
+import profileRoutes from './routes/profileRoutes';
+import postRoutes from './routes/postRoutes';
+import messageRoutes from './routes/messageRoutes';
+
+
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+sequelize.authenticate()
+  .then(() => console.log('Database connected'))
+  .catch(err => console.error('Database connection error:', err));
+
+// Sync models (use with caution in production)
+// sequelize.sync({ alter: true }).then(() => console.log('Models synchronized'));
+
+app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/posts', postRoutes);
+app.use('/api/messages', messageRoutes);
+
 
 const PORT = process.env.PORT || 5000;
-
-// Only start the server if this file is run directly, not when imported (e.g., in tests)
-if (require.main === module) {
-  const startServer = async () => {
-    try {
-      await sequelize.authenticate();
-      console.log('Database connected');
-      const isProduction = process.env.NODE_ENV === 'production';
-      await sequelize.sync({ alter: !isProduction });
-      app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-    } catch (error) {
-      console.error('Unable to connect to the database:', error);
-    }
-  };
-  startServer();
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
-export { app, sequelize };
+export default app;

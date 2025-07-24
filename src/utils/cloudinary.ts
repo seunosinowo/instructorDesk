@@ -1,3 +1,4 @@
+import type { Express } from 'express';
 import { v2 as cloudinary } from 'cloudinary';
 
 cloudinary.config({

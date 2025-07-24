@@ -8,9 +8,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node", "jest"],
+    "types": ["node", "jest", "express", "multer"],
     "moduleResolution": "node"
   },
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*", "tests/**/*", "src/types/**/*"],
   "exclude": ["node_modules", "dist"]
 }
