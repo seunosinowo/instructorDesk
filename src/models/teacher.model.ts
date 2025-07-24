@@ -1,29 +1,63 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
-import User from './user.model';
+import { User } from './user.model';
 
-const Teacher = sequelize.define('Teacher', {
+interface TeacherAttributes {
+  id: string;
+  userId: string;
+  subjects: string[];
+  qualifications: string;
+  experience: number;
+  createdAt?: Date;
+}
+
+interface TeacherCreationAttributes extends Optional<TeacherAttributes, 'id' | 'createdAt'> {}
+
+class Teacher extends Model<TeacherAttributes, TeacherCreationAttributes> implements TeacherAttributes {
+  public id!: string;
+  public userId!: string;
+  public subjects!: string[];
+  public qualifications!: string;
+  public experience!: number;
+  public createdAt!: Date;
+}
+
+Teacher.init({
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
+    primaryKey: true
   },
   userId: {
     type: DataTypes.UUID,
+    references: {
+      model: User,
+      key: 'id'
+    },
     allowNull: false,
-    references: { model: User, key: 'id' },
+    unique: true
   },
-  subject: {
+  subjects: {
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    allowNull: false
+  },
+  qualifications: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: false
   },
   experience: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: DataTypes.INTEGER,
+    allowNull: false
   },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  sequelize,
+  tableName: 'Teachers'
 });
 
-Teacher.belongsTo(User, { foreignKey: 'userId' });
 User.hasOne(Teacher, { foreignKey: 'userId' });
 
-export default Teacher;
+export { Teacher };

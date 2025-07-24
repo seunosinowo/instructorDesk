@@ -1,27 +1,56 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
-import User from './user.model';
-import Post from './post.model';
+import { User } from './user.model';
+import { Post } from './post.model';
 
-const Like = sequelize.define('Like', {
+interface LikeAttributes {
+  id: number;
+  userId: string;
+  postId: string;
+  createdAt?: Date;
+}
+
+interface LikeCreationAttributes extends Optional<LikeAttributes, 'id' | 'createdAt'> {}
+
+class Like extends Model<LikeAttributes, LikeCreationAttributes> implements LikeAttributes {
+  public id!: number;
+  public userId!: string;
+  public postId!: string;
+  public createdAt!: Date;
+}
+
+Like.init({
   id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
   },
   userId: {
     type: DataTypes.UUID,
-    allowNull: false,
-    references: { model: User, key: 'id' },
+    references: {
+      model: User,
+      key: 'id'
+    },
+    allowNull: false
   },
   postId: {
     type: DataTypes.UUID,
-    allowNull: false,
-    references: { model: Post, key: 'id' },
+    references: {
+      model: Post,
+      key: 'id'
+    },
+    allowNull: false
   },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  sequelize,
+  tableName: 'Likes'
 });
 
-Like.belongsTo(User, { foreignKey: 'userId' });
-Like.belongsTo(Post, { foreignKey: 'postId' });
+User.hasMany(Like, { foreignKey: 'userId' });
+Post.hasMany(Like, { foreignKey: 'postId' });
 
-export default Like;
+export { Like };
