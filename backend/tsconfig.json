@@ -11,6 +11,6 @@
     "types": ["node", "jest", "express", "multer"],
     "moduleResolution": "node"
   },
-  "include": ["src/**/*", "tests/**/*", "src/types/**/*"],
+  "include": ["backend/src/**/*", "backend/tests/**/*", "backend/src/types/**/*"],
   "exclude": ["node_modules", "dist"]
 }
