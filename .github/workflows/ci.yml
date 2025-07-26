@@ -33,9 +33,9 @@ jobs:
           node-version: '20.x'
           cache: 'npm'
       - name: Install dependencies
-        run: npm ci
+        run: cd backend && npm ci
       - name: Run TypeScript checks
-        run: npx tsc --noEmit
+        run: cd backend && npx tsc --noEmit
       - name: Run tests
         env:
           DB_NAME: teachersdb
@@ -50,4 +50,4 @@ jobs:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
           NODE_ENV: test
-        run: npm test
+        run: cd backend && npm test
