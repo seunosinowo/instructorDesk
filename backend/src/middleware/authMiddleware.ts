@@ -15,3 +15,16 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     res.status(401).json({ error: 'Invalid token' });
   }
 };
+
+export const guestMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  if (token) {
+    try {
+      jwt.verify(token, process.env.JWT_SECRET!);
+      return res.status(403).json({ error: 'Already authenticated' });
+    } catch (error) {
+      // Token is invalid, continue as guest
+    }
+  }
+  next();
+};
