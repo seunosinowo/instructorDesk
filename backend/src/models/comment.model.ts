@@ -1,7 +1,5 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
-import { User } from './user.model';
-import { Post } from './post.model';
 
 interface CommentAttributes {
   id: number;
@@ -29,18 +27,10 @@ Comment.init({
   },
   userId: {
     type: DataTypes.UUID,
-    references: {
-      model: User,
-      key: 'id'
-    },
     allowNull: false
   },
   postId: {
     type: DataTypes.UUID,
-    references: {
-      model: Post,
-      key: 'id'
-    },
     allowNull: false
   },
   content: {
@@ -56,7 +46,6 @@ Comment.init({
   tableName: 'Comments'
 });
 
-User.hasMany(Comment, { foreignKey: 'userId' });
-Post.hasMany(Comment, { foreignKey: 'postId' });
+// Associations are defined in models/index.ts to avoid circular dependencies
 
 export { Comment };

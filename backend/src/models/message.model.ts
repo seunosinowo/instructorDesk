@@ -1,6 +1,5 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
-import { User } from './user.model';
 
 interface MessageAttributes {
   id: string;
@@ -57,8 +56,4 @@ Message.init(
   }
 );
 
-// Define associations
-Message.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
-Message.belongsTo(User, { foreignKey: 'receiverId', as: 'receiver' });
-User.hasMany(Message, { foreignKey: 'senderId' });
-User.hasMany(Message, { foreignKey: 'receiverId' });
+// Associations are defined in models/index.ts to avoid circular dependencies

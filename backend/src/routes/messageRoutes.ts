@@ -1,8 +1,8 @@
 import express, { Response } from 'express';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { Op } from 'sequelize';
-import { Message } from '../models/message.model';
-import { User } from '../models/user.model';
+import { Message } from '../models';
+import { User } from '../models';
 
 interface AuthenticatedRequest extends express.Request {
   user?: { id: string; role: string };
