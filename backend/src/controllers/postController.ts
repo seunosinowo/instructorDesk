@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
-import { Post } from '../models/post.model';
-import { User } from '../models/user.model';
+import { Post, User } from '../models';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import { v4 as uuidv4 } from 'uuid';
 

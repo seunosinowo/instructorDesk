@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
-import { Like } from '../models/like.model';
-import { Post } from '../models/post.model';
+import { Like, Post } from '../models';
 import { v4 as uuidv4 } from 'uuid';
 
 export const likePost = [
