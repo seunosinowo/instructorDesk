@@ -24,7 +24,6 @@ describe('Profile Routes', () => {
       password: await bcrypt.hash('password123', 10),
       role: 'teacher',
       name: 'Test User',
-      bio: 'Test bio',
       emailConfirmed: true
     });
     userId = user.id; // Store the UUID

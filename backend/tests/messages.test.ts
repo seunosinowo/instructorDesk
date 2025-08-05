@@ -26,7 +26,6 @@ describe('Message Routes', () => {
       password: await bcrypt.hash('password123', 10),
       role: 'student',
       name: 'Student User',
-      bio: 'Test bio',
       emailConfirmed: true
     });
     teacher = await User.create({
@@ -34,7 +33,6 @@ describe('Message Routes', () => {
       password: await bcrypt.hash('password123', 10),
       role: 'teacher',
       name: 'Teacher User',
-      bio: 'Test bio',
       emailConfirmed: true
     });
     token = jwt.sign({ id: student.id, role: 'student' }, process.env.JWT_SECRET!);
@@ -58,14 +56,14 @@ describe('Message Routes', () => {
     const res = await request(app)
       .post('/api/messages')
       .set('Authorization', `Bearer ${token}`)
-      .send({ teacherId: teacher.id, content: 'Hello teacher' });
+      .send({ receiverId: teacher.id, content: 'Hello teacher' });
     expect(res.status).toBe(201);
     expect(res.body.content).toBe('Hello teacher');
   });
 
   it('should get teachers', async () => {
     const res = await request(app)
-      .get('/api/messages/list/teachers')
+      .get('/api/messages/teachers')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body.length).toBeGreaterThan(0);
