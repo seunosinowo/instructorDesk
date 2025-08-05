@@ -43,9 +43,9 @@ const ProfileDashboard: React.FC<ProfileDashboardProps> = ({ profile }) => {
         teacherProfile.experience > 0,
         teacherProfile.education,
         teacherProfile.teachingPhilosophy,
-        teacherProfile.hourlyRate > 0,
+        (teacherProfile.hourlyRate ?? 0) > 0,
         teacherProfile.location,
-        teacherProfile.languages?.length > 0
+        (teacherProfile.languages?.length ?? 0) > 0
       ];
       const completedFields = fields.filter(Boolean).length;
       return Math.round((completedFields / fields.length) * 100);
@@ -54,12 +54,12 @@ const ProfileDashboard: React.FC<ProfileDashboardProps> = ({ profile }) => {
       const fields = [
         studentProfile.interests?.length > 0,
         studentProfile.academicLevel,
-        studentProfile.goals?.length > 0,
+        (studentProfile.goals?.length ?? 0) > 0,
         studentProfile.currentInstitution,
         studentProfile.careerGoals,
-        studentProfile.skills?.length > 0,
+        (studentProfile.skills?.length ?? 0) > 0,
         studentProfile.location,
-        studentProfile.languages?.length > 0
+        (studentProfile.languages?.length ?? 0) > 0
       ];
       const completedFields = fields.filter(Boolean).length;
       return Math.round((completedFields / fields.length) * 100);
