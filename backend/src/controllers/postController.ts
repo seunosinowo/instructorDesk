@@ -25,6 +25,8 @@ export const createPost = [
       const post = await Post.create({
         userId,
         content,
+        type: 'general',
+        imageUrl: image
       });
 
       res.status(201).json(post);
