@@ -8,14 +8,15 @@ interface UserAttributes {
   password: string;
   role: 'teacher' | 'student';
   name: string;
-  bio?: string;
+  profilePicture?: string;
   profileCompleted: boolean;
   emailConfirmed: boolean;
   confirmationToken?: string;
   createdAt?: Date;
+  updatedAt?: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'profileCompleted' | 'emailConfirmed' | 'createdAt'> {}
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'profileCompleted' | 'emailConfirmed' | 'createdAt' | 'updatedAt'> {}
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public id!: string;
@@ -23,14 +24,15 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public password!: string;
   public role!: 'teacher' | 'student';
   public name!: string;
-  public bio?: string;
+  public profilePicture?: string;
   public profileCompleted!: boolean;
   public emailConfirmed!: boolean;
   public confirmationToken?: string;
   public createdAt!: Date;
+  public updatedAt!: Date;
 
   static associate(models: any) {
-    // Associations defined elsewhere
+    // Associations defined in models/index.ts
   }
 }
 
@@ -57,8 +59,8 @@ User.init({
     type: DataTypes.STRING,
     allowNull: false
   },
-  bio: {
-    type: DataTypes.TEXT
+  profilePicture: {
+    type: DataTypes.STRING
   },
   profileCompleted: {
     type: DataTypes.BOOLEAN,
@@ -78,6 +80,7 @@ User.init({
 }, {
   sequelize,
   tableName: 'Users',
+  timestamps: true,
   hooks: {
     beforeSave: async (user: User) => {
       if (user.changed('password')) {
@@ -87,20 +90,6 @@ User.init({
   }
 });
 
-// Associations
-import { Comment } from './comment.model';
-import { Connection } from './connection.model';
-import { Like } from './like.model';
-import { Post } from './post.model';
-import { Review } from './review.model';
-import { Teacher } from './teacher.model';
-
-User.hasMany(Comment, { foreignKey: 'userId' });
-User.hasMany(Connection, { foreignKey: 'userId1' });
-User.hasMany(Connection, { foreignKey: 'userId2' });
-User.hasMany(Like, { foreignKey: 'userId' });
-User.hasMany(Post, { foreignKey: 'userId' });
-User.hasMany(Review, { foreignKey: 'userId' });
-User.hasOne(Teacher, { foreignKey: 'userId' });
+// Associations are defined in models/index.ts to avoid circular dependencies
 
 export { User };

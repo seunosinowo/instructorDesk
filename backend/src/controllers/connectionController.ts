@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
-import { Connection } from '../models/connection.model';
-import { User } from '../models/user.model';
+import { Connection } from '../models';
+import { User } from '../models';
 import { Op } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 

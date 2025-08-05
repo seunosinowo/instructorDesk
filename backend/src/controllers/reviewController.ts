@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import { body, query, validationResult } from 'express-validator';
-import { Review } from '../models/review.model';
-import { Teacher } from '../models/teacher.model';
-import { User } from '../models/user.model';
+import { Review, Teacher } from '../models';
+import { User } from '../models';
 import { v4 as uuidv4 } from 'uuid';
 
 export const createReview = [

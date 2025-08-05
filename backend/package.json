@@ -1,9 +1,9 @@
 {
   "name": "teacher-student-backend",
   "version": "1.0.0",
-  "main": "dist/server.js",
+  "main": "dist/src/server.js",
   "scripts": {
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "build": "tsc",
     "dev": "nodemon src/server.ts",
     "test": "jest --detectOpenHandles"

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { body, param, validationResult } from 'express-validator';
-import { Teacher } from '../models/teacher.model';
-import { User } from '../models/user.model';
+import { Teacher } from '../models';
+import { User } from '../models';
 import { v4 as uuidv4 } from 'uuid';
 
 export const createTeacherProfile = [

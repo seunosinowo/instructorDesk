@@ -8,6 +8,7 @@ interface TeacherAttributes {
   subjects: string[];
   qualifications: string;
   experience: number;
+  education?: string;
   specializations?: string[];
   teachingMethods?: string[];
   availability?: string;
@@ -15,16 +16,16 @@ interface TeacherAttributes {
   location?: string;
   languages?: string[];
   certifications?: string[];
-  education?: string;
   achievements?: string[];
   teachingPhilosophy?: string;
   preferredStudentLevel?: string[];
   contactPreference?: string;
   socialLinks?: object;
   createdAt?: Date;
+  updatedAt?: Date;
 }
 
-interface TeacherCreationAttributes extends Optional<TeacherAttributes, 'id' | 'createdAt'> {}
+interface TeacherCreationAttributes extends Optional<TeacherAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
 
 class Teacher extends Model<TeacherAttributes, TeacherCreationAttributes> implements TeacherAttributes {
   public id!: string;
@@ -32,6 +33,7 @@ class Teacher extends Model<TeacherAttributes, TeacherCreationAttributes> implem
   public subjects!: string[];
   public qualifications!: string;
   public experience!: number;
+  public education?: string;
   public specializations?: string[];
   public teachingMethods?: string[];
   public availability?: string;
@@ -39,13 +41,13 @@ class Teacher extends Model<TeacherAttributes, TeacherCreationAttributes> implem
   public location?: string;
   public languages?: string[];
   public certifications?: string[];
-  public education?: string;
   public achievements?: string[];
   public teachingPhilosophy?: string;
   public preferredStudentLevel?: string[];
   public contactPreference?: string;
   public socialLinks?: object;
   public createdAt!: Date;
+  public updatedAt!: Date;
 }
 
 Teacher.init({
@@ -75,6 +77,9 @@ Teacher.init({
     type: DataTypes.INTEGER,
     allowNull: false
   },
+  education: {
+    type: DataTypes.TEXT
+  },
   specializations: {
     type: DataTypes.ARRAY(DataTypes.STRING),
     defaultValue: []
@@ -100,9 +105,6 @@ Teacher.init({
     type: DataTypes.ARRAY(DataTypes.STRING),
     defaultValue: []
   },
-  education: {
-    type: DataTypes.TEXT
-  },
   achievements: {
     type: DataTypes.ARRAY(DataTypes.STRING),
     defaultValue: []
@@ -124,12 +126,17 @@ Teacher.init({
   createdAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
 }, {
   sequelize,
-  tableName: 'Teachers'
+  tableName: 'Teachers',
+  timestamps: true
 });
 
-User.hasOne(Teacher, { foreignKey: 'userId' });
+// Associations are defined in models/index.ts to avoid circular dependencies
 
 export { Teacher };
