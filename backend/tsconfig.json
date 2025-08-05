@@ -13,7 +13,8 @@
   },
   "include": [
     "src/**/*",
-    "src/types/**/*"
+    "src/types/**/*",
+    "tests/**/*"
   ],
   "exclude": [
     "node_modules",
