@@ -40,7 +40,8 @@ beforeAll(async () => {
   try {
     await sequelize.authenticate();
     console.log('Test database connected');
-    await sequelize.sync({ force: true }); // Reset database for tests
+    // Only sync without force to avoid dropping existing data
+    await sequelize.sync();
   } catch (error) {
     console.error('Test database connection failed:', error);
     throw error;
@@ -48,8 +49,8 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
-  // Clean up database after each test
-  await User.destroy({ where: {}, force: true });
+  // Clean up only test data, not all data
+  await User.destroy({ where: { email: { [require('sequelize').Op.like]: '%@example.com' } }, force: true });
 });
 
 afterAll(async () => {

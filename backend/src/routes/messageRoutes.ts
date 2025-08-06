@@ -1,5 +1,6 @@
 import express, { Response } from 'express';
 import { authMiddleware } from '../middleware/authMiddleware';
+import { requireProfileCompletion } from '../middleware/profileCompletionMiddleware';
 import { Op } from 'sequelize';
 import { Message } from '../models';
 import { User } from '../models';
@@ -11,7 +12,7 @@ interface AuthenticatedRequest extends express.Request {
 const router = express.Router();
 
 // Get all users (both teachers and students) for messaging
-router.get('/users', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/users', authMiddleware, requireProfileCompletion, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const users = await User.findAll({ 
       where: { 
@@ -39,7 +40,7 @@ router.get('/teachers', authMiddleware, async (req: AuthenticatedRequest, res: R
 });
 
 // Send a message to any user
-router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/', authMiddleware, requireProfileCompletion, async (req: AuthenticatedRequest, res: Response) => {
   const { receiverId, content } = req.body;
   try {
     const message = await Message.create({ 
@@ -64,7 +65,7 @@ router.post('/', authMiddleware, async (req: AuthenticatedRequest, res: Response
 });
 
 // Get all conversations for the current user
-router.get('/conversations', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+router.get('/conversations', authMiddleware, requireProfileCompletion, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const conversations = await Message.findAll({
       where: {

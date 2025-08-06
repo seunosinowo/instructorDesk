@@ -1,6 +1,7 @@
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
+import ComponentsShowcase from './pages/ComponentsShowcase';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
 import ProfileEditPage from './pages/ProfileEditPage';
@@ -30,6 +31,7 @@ const App: React.FC = () => {
       >
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/components" element={<ComponentsShowcase />} />
           <Route path="/home" element={
             <ProtectedRoute>
               <HomePage />
@@ -56,7 +58,7 @@ const App: React.FC = () => {
             </ProtectedRoute>
           } />
           <Route path="/profile/setup" element={
-            <ProtectedRoute>
+            <ProtectedRoute requireProfileCompletion={false}>
               <ProfileSetupPage />
             </ProtectedRoute>
           } />

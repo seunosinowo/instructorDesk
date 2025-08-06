@@ -18,22 +18,43 @@ describe('Profile Routes', () => {
   let userId: string;
 
   beforeEach(async () => {
-    await sequelize.sync({ force: true });
+    await sequelize.sync(); // Remove force: true to avoid dropping tables
     const user = await User.create({
       email: 'test@example.com',
       password: await bcrypt.hash('password123', 10),
       role: 'teacher',
       name: 'Test User',
-      emailConfirmed: true
+      emailConfirmed: true,
+      profileCompleted: true // Add this for consistency
     });
     userId = user.id; // Store the UUID
     token = jwt.sign({ id: user.id, role: 'teacher' }, process.env.JWT_SECRET!);
   });
 
   afterEach(async () => {
-    // Clean up database after each test
-    await Teacher.destroy({ where: {}, force: true });
-    await User.destroy({ where: {}, force: true });
+    // Clean up only test data, not all data
+    await Teacher.destroy({ where: { userId }, force: true });
+    await Student.destroy({ 
+      where: { 
+        userId: { [require('sequelize').Op.in]: await User.findAll({
+          where: { email: { [require('sequelize').Op.like]: '%@test.com' } },
+          attributes: ['id']
+        }).then(users => users.map(u => u.id))}
+      }, 
+      force: true 
+    });
+    await User.destroy({ 
+      where: { 
+        email: { [require('sequelize').Op.like]: '%@test.com' } 
+      }, 
+      force: true 
+    });
+    await User.destroy({ 
+      where: { 
+        email: { [require('sequelize').Op.like]: '%@example.com' } 
+      }, 
+      force: true 
+    });
   });
 
   afterAll(async () => {
@@ -69,10 +90,11 @@ describe('Profile Routes', () => {
     // Create a student user
     const studentUser = await User.create({
       email: 'student@test.com',
-      password: 'password123',
+      password: await bcrypt.hash('password123', 10), // Hash the password
       role: 'student',
       name: 'Test Student',
       emailConfirmed: true,
+      profileCompleted: true // Add this for consistency
     });
 
     const studentToken = jwt.sign({ id: studentUser.id, role: 'student' }, process.env.JWT_SECRET!);

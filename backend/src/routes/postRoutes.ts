@@ -1,11 +1,12 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware';
+import { requireProfileCompletion } from '../middleware/profileCompletionMiddleware';
 import { Post, User, Like, Comment } from '../models';
 
 const router = express.Router();
 
 // Create a new post
-router.post('/', authMiddleware, async (req: express.Request & { user?: { id: string; role: string } }, res) => {
+router.post('/', authMiddleware, requireProfileCompletion, async (req: express.Request & { user?: { id: string; role: string } }, res) => {
   const { content, type = 'general', imageUrl } = req.body;
   try {
     const post = await Post.create({ 
@@ -32,7 +33,7 @@ router.post('/', authMiddleware, async (req: express.Request & { user?: { id: st
 });
 
 // Get all posts with pagination
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, requireProfileCompletion, async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const offset = (Number(page) - 1) * Number(limit);

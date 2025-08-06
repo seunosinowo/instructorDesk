@@ -6,7 +6,7 @@ interface StudentAttributes {
   userId: string;
   interests: string[];
   academicLevel?: string;
-  goals?: string[];
+  goals?: string;
   learningStyle?: string;
   preferredSubjects?: string[];
   currentInstitution?: string;
@@ -31,7 +31,7 @@ class Student extends Model<StudentAttributes, StudentCreationAttributes> implem
   public userId!: string;
   public interests!: string[];
   public academicLevel?: string;
-  public goals?: string[];
+  public goals?: string;
   public learningStyle?: string;
   public preferredSubjects?: string[];
   public currentInstitution?: string;
@@ -76,8 +76,7 @@ Student.init({
     type: DataTypes.STRING
   },
   goals: {
-    type: DataTypes.ARRAY(DataTypes.STRING),
-    defaultValue: []
+    type: DataTypes.TEXT
   },
   learningStyle: {
     type: DataTypes.STRING

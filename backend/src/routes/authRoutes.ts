@@ -1,6 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { Op } from 'sequelize';
 import { User } from '../models';
 import { sendConfirmationEmail, sendPasswordResetEmail } from '../utils/emailService';
 
@@ -15,7 +16,7 @@ const validateEmail = (email: string): boolean => {
 // Register endpoint
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, role, name } = req.body;
+    const { email, password, role, name, bio } = req.body;
 
     // Validate required fields
     if (!email || !password || !role || !name) {
@@ -60,7 +61,8 @@ router.post('/register', async (req, res) => {
       email, 
       password: normalizedPassword,
       role, 
-      name, 
+      name,
+      bio,
       confirmationToken,
       emailConfirmed: false
     });
@@ -92,7 +94,7 @@ router.post('/register', async (req, res) => {
 // Login endpoint
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe = false } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -129,14 +131,40 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Generate token
-    const token = jwt.sign(
-      { id: user.id, role: user.role }, 
-      process.env.JWT_SECRET!
+    // Generate long-lasting tokens (always remember user)
+    const accessTokenExpiry = '30d'; // 30 days for all logins
+    
+    const accessToken = jwt.sign(
+      { id: user.id, role: user.role, type: 'access' }, 
+      process.env.JWT_SECRET!,
+      { expiresIn: accessTokenExpiry }
     );
 
-    return res.json({ 
-      token, 
+    // Always create refresh token for extended sessions
+    const refreshTokenExpiry = '90d'; // 90 days refresh token
+    
+    const refreshToken = jwt.sign(
+      { id: user.id, type: 'refresh' },
+      process.env.JWT_SECRET!,
+      { expiresIn: refreshTokenExpiry }
+    );
+
+    // Store refresh token in database
+    const refreshTokenExpiryDate = new Date();
+    refreshTokenExpiryDate.setDate(refreshTokenExpiryDate.getDate() + 90);
+
+    await User.update(
+      { 
+        refreshToken,
+        refreshTokenExpiry: refreshTokenExpiryDate
+      },
+      { where: { id: user.id } }
+    );
+
+    const response = { 
+      token: accessToken,
+      refreshToken,
+      expiresIn: 30 * 24 * 60 * 60, // 30 days in seconds
       user: {
         id: user.id,
         email: user.email,
@@ -144,7 +172,9 @@ router.post('/login', async (req, res) => {
         name: user.name,
         profileCompleted: user.profileCompleted
       }
-    });
+    };
+
+    return res.json(response);
   } catch (error) {
     console.error('Login error:', error);
     return res.status(500).json({ message: 'Server error' });
@@ -229,17 +259,109 @@ router.post('/send-confirmation', async (req, res) => {
   }
 });
 
+// Refresh token endpoint
+router.post('/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(401).json({ 
+        error: 'Refresh token required' 
+      });
+    }
+
+    // Verify refresh token
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET!) as { id: string, type: string };
+
+    if (decoded.type !== 'refresh') {
+      return res.status(401).json({ 
+        error: 'Invalid token type' 
+      });
+    }
+
+    // Find user and check if refresh token matches and is not expired
+    const user = await User.findOne({ 
+      where: { 
+        id: decoded.id,
+        refreshToken,
+        refreshTokenExpiry: {
+          [Op.gt]: new Date()
+        }
+      } 
+    });
+
+    if (!user) {
+      return res.status(401).json({ 
+        error: 'Invalid or expired refresh token' 
+      });
+    }
+
+    // Generate new access token
+    const newAccessToken = jwt.sign(
+      { id: user.id, role: user.role, type: 'access' }, 
+      process.env.JWT_SECRET!,
+      { expiresIn: '1h' }
+    );
+
+    return res.json({ 
+      token: newAccessToken,
+      expiresIn: 60 * 60 // 1 hour in seconds
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    return res.status(401).json({ error: 'Invalid refresh token' });
+  }
+});
+
+// Logout endpoint
+router.post('/logout', async (req, res) => {
+  try {
+    const { userId, refreshToken } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ 
+        error: 'User ID required' 
+      });
+    }
+
+    // Clear refresh token from database
+    await User.update(
+      { 
+        refreshToken: undefined,
+        refreshTokenExpiry: undefined
+      },
+      { where: { id: userId } }
+    );
+
+    return res.json({ 
+      message: 'Logged out successfully' 
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Debug endpoint to check users (remove in production)
 router.get('/debug/users', async (req, res) => {
   try {
     const users = await User.findAll({
-      attributes: ['id', 'email', 'name', 'role', 'emailConfirmed', 'createdAt'],
+      attributes: ['id', 'email', 'name', 'role', 'bio', 'emailConfirmed', 'profileCompleted', 'createdAt'],
       order: [['createdAt', 'DESC']]
     });
     
     return res.json({
       count: users.length,
-      users: users
+      users: users.map(u => ({
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: u.role,
+        bio: u.bio,
+        emailConfirmed: u.emailConfirmed,
+        profileCompleted: u.profileCompleted,
+        createdAt: u.createdAt
+      }))
     });
   } catch (error) {
     console.error('Debug users error:', error);

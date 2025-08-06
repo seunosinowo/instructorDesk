@@ -1,14 +1,8 @@
 import React from 'react';
-import HeroSection from '../components/Landing/HeroSection';
-import AboutSection from '../components/Landing/AboutSection';
+import LandingPage from '../components/Landing/LandingPage';
 
-const LandingPage: React.FC = () => {
-  return (
-    <div>
-      <HeroSection />
-      <AboutSection />
-    </div>
-  );
+const LandingPageWrapper: React.FC = () => {
+  return <LandingPage />;
 };
 
-export default LandingPage;
+export default LandingPageWrapper;

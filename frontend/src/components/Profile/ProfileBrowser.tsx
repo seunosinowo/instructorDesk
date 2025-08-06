@@ -22,6 +22,7 @@ const ProfileBrowser: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+  const currentUserId = localStorage.getItem('userId');
 
   useEffect(() => {
     fetchUsers();
@@ -114,63 +115,69 @@ const ProfileBrowser: React.FC = () => {
         <>
           {/* Users Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            {users.map((user) => (
-              <motion.div
-                key={user.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ scale: 1.02 }}
-                className="bg-gradient-to-br from-white to-gray-50 rounded-lg border border-gray-200 p-6 cursor-pointer hover:shadow-lg transition-all duration-200"
-                onClick={() => navigate(`/profile/${user.id}`)}
-              >
-                <div className="flex flex-col items-center text-center">
-                  {/* Profile Picture */}
-                  <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-primary mb-4">
-                    {user.profilePicture ? (
-                      <img 
-                        src={user.profilePicture} 
-                        alt={user.name} 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white font-bold text-xl">
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* User Info */}
-                  <h3 className="font-semibold text-gray-800 mb-1">{user.name}</h3>
-                  <div className="flex items-center space-x-1 mb-2">
-                    <span className="text-lg">{getRoleIcon(user.role)}</span>
-                    <span className="text-sm text-gray-600 capitalize">{user.role}</span>
-                  </div>
-
-                  {/* Profile Highlight */}
-                  <p className="text-xs text-gray-500 mb-3 line-clamp-2">
-                    {getProfileHighlight(user)}
-                  </p>
-
-                  {/* Bio */}
-                  {user.bio && (
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-                      {user.bio}
-                    </p>
+            {users.map((user) => {
+              const isCurrentUser = user.id === currentUserId;
+              
+              return (
+                <motion.div
+                  key={user.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileHover={{ scale: 1.02 }}
+                  className="bg-gradient-to-br from-white to-gray-50 rounded-lg border border-gray-200 p-4 cursor-pointer hover:shadow-lg transition-all duration-200 relative h-56 flex flex-col"
+                  onClick={() => navigate(`/profile/${user.id}`)}
+                >
+                  {/* Your Profile indicator */}
+                  {isCurrentUser && (
+                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 bg-orange-primary text-white text-xs px-2 py-1 rounded-b-md font-medium">
+                      Your Profile
+                    </div>
                   )}
+                  
+                  <div className="flex flex-col items-center text-center flex-grow">
+                    {/* Profile Picture */}
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-primary mb-4">
+                      {user.profilePicture ? (
+                        <img 
+                          src={user.profilePicture} 
+                          alt={user.name} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white font-bold text-xl">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Connect Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Handle connection logic
-                    }}
-                    className="w-full bg-orange-primary text-white py-2 px-4 rounded-lg hover:bg-orange-secondary transition-colors text-sm font-medium"
-                  >
-                    View Profile
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+                    {/* User Info */}
+                    <h3 className="font-semibold text-gray-800 mb-1 truncate w-full">{user.name}</h3>
+                    <div className="flex items-center space-x-1 mb-1">
+                      <span className="text-lg">{getRoleIcon(user.role)}</span>
+                      <span className="text-sm text-gray-600 capitalize">{user.role}</span>
+                    </div>
+
+                    {/* Profile Highlight */}
+                    <div>
+                      <p className="text-xs text-gray-500 line-clamp-2 text-center">
+                        {getProfileHighlight(user)}
+                      </p>
+                    </div>
+
+                    {/* Connect Button - Always at bottom */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/profile/${user.id}`);
+                      }}
+                      className="w-full bg-orange-primary text-white py-1.5 px-3 rounded-md hover:bg-orange-secondary transition-colors text-sm font-medium mt-1"
+                    >
+                      View Profile
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
 
           {/* Pagination */}

@@ -20,28 +20,31 @@ describe('Message Routes', () => {
   let student: User;
 
   beforeEach(async () => {
-    await sequelize.sync({ force: true });
+    await sequelize.sync(); // Remove force: true to avoid dropping tables
     student = await User.create({
       email: 'student@example.com',
       password: await bcrypt.hash('password123', 10),
       role: 'student',
       name: 'Student User',
-      emailConfirmed: true
+      emailConfirmed: true,
+      profileCompleted: true  // Add this to allow messaging
     });
     teacher = await User.create({
       email: 'teacher@example.com',
       password: await bcrypt.hash('password123', 10),
       role: 'teacher',
       name: 'Teacher User',
-      emailConfirmed: true
+      emailConfirmed: true,
+      profileCompleted: true
     });
     token = jwt.sign({ id: student.id, role: 'student' }, process.env.JWT_SECRET!);
     teacherToken = jwt.sign({ id: teacher.id, role: 'teacher' }, process.env.JWT_SECRET!);
   });
 
   afterEach(async () => {
-    await Message.destroy({ where: {}, force: true });
-    await User.destroy({ where: {}, force: true });
+    // Clean up only test data, not all data
+    await Message.destroy({ where: { senderId: [student.id, teacher.id] }, force: true });
+    await User.destroy({ where: { email: { [require('sequelize').Op.like]: '%@example.com' } }, force: true });
   });
 
   afterAll(async () => {

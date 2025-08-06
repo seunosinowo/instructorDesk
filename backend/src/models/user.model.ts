@@ -8,10 +8,13 @@ interface UserAttributes {
   password: string;
   role: 'teacher' | 'student';
   name: string;
+  bio?: string;
   profilePicture?: string;
   profileCompleted: boolean;
   emailConfirmed: boolean;
   confirmationToken?: string;
+  refreshToken?: string;
+  refreshTokenExpiry?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -24,10 +27,13 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public password!: string;
   public role!: 'teacher' | 'student';
   public name!: string;
+  public bio?: string;
   public profilePicture?: string;
   public profileCompleted!: boolean;
   public emailConfirmed!: boolean;
   public confirmationToken?: string;
+  public refreshToken?: string;
+  public refreshTokenExpiry?: Date;
   public createdAt!: Date;
   public updatedAt!: Date;
 
@@ -59,6 +65,9 @@ User.init({
     type: DataTypes.STRING,
     allowNull: false
   },
+  bio: {
+    type: DataTypes.TEXT
+  },
   profilePicture: {
     type: DataTypes.STRING
   },
@@ -72,6 +81,12 @@ User.init({
   },
   confirmationToken: {
     type: DataTypes.STRING
+  },
+  refreshToken: {
+    type: DataTypes.STRING
+  },
+  refreshTokenExpiry: {
+    type: DataTypes.DATE
   },
   createdAt: {
     type: DataTypes.DATE,

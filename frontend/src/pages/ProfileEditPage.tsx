@@ -139,7 +139,7 @@ const ProfileEditPage: React.FC = () => {
         const formData = new FormData();
         formData.append('profilePicture', profilePicture);
         
-        await axios.post(`${import.meta.env.VITE_API_URL}/profile/upload-picture`, formData, {
+        await axios.post(`${import.meta.env.VITE_API_URL}/upload/profile-picture`, formData, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'

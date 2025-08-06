@@ -7,8 +7,15 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     return res.status(401).json({ error: 'No token provided' });
   }
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-    (req as any).user = decoded as { id: string; role: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string; role: string; type?: string };
+    
+    // Check if this is an access token (not a refresh token)
+    // Only reject if explicitly marked as refresh token
+    if (decoded.type === 'refresh') {
+      return res.status(401).json({ error: 'Invalid token type' });
+    }
+    
+    (req as any).user = { id: decoded.id, role: decoded.role };
     next();
   } catch (error) {
     console.error(error);

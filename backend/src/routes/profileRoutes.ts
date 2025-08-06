@@ -4,6 +4,7 @@ import multer from 'multer';
 import { User } from '../models';
 import { Teacher, Student } from '../models';
 import cloudinary from '../config/cloudinary';
+import { requireProfileCompletion } from '../middleware/profileCompletionMiddleware';
 
 const router = express.Router();
 
@@ -148,11 +149,14 @@ router.put('/', authMiddleware, async (req: express.Request & { user?: { id: str
         socialLinks
       } = req.body;
 
+      // Convert goals array to string for database storage
+      const goalsString = Array.isArray(goals) ? goals.join('\n') : goals;
+
       await Student.upsert({
         userId: user.id,
         interests,
         academicLevel,
-        goals,
+        goals: goalsString,
         learningStyle,
         preferredSubjects,
         currentInstitution,
@@ -241,11 +245,14 @@ router.post('/', authMiddleware, async (req: express.Request & { user?: { id: st
         socialLinks
       } = req.body;
 
+      // Convert goals array to string for database storage
+      const goalsString = Array.isArray(goals) ? goals.join('\n') : goals;
+
       await Student.upsert({
         userId: user.id,
         interests,
         academicLevel,
-        goals,
+        goals: goalsString,
         learningStyle,
         preferredSubjects,
         currentInstitution,
@@ -302,7 +309,13 @@ router.get('/:id', authMiddleware, async (req, res) => {
       profile = teacher ? teacher.toJSON() : {};
     } else if (user.role === 'student') {
       const student = await Student.findOne({ where: { userId: user.id } });
-      profile = student ? student.toJSON() : {};
+      if (student) {
+        profile = student.toJSON();
+        // Convert goals string back to array for frontend
+        if ((profile as any).goals && typeof (profile as any).goals === 'string') {
+          (profile as any).goals = (profile as any).goals.split('\n').filter((goal: string) => goal.trim());
+        }
+      }
     }
 
     res.json({ ...user.toJSON(), profile });
@@ -313,18 +326,22 @@ router.get('/:id', authMiddleware, async (req, res) => {
 });
 
 // Get all users for profile browsing
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, async (req: express.Request & { user?: { id: string; role: string } }, res) => {
   try {
     const { role, search, page = 1, limit = 10 } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
     
-    let whereClause: any = { profileCompleted: true };
+    // console.log('Profile browsing request:', { role, search, page, limit, currentUser: req.user });
+    
+    let whereClause: any = {};
     if (role) {
       whereClause.role = role;
     }
     if (search) {
       whereClause.name = { [require('sequelize').Op.iLike]: `%${search}%` };
     }
+    
+    // console.log('Where clause:', whereClause);
 
     const users = await User.findAndCountAll({
       where: whereClause,
@@ -333,6 +350,8 @@ router.get('/', authMiddleware, async (req, res) => {
       offset,
       order: [['createdAt', 'DESC']]
     });
+
+    // console.log('Found users:', users.count);
 
     // Get profile data for each user
     const usersWithProfiles = await Promise.all(
@@ -343,7 +362,13 @@ router.get('/', authMiddleware, async (req, res) => {
           profile = teacher ? teacher.toJSON() : {};
         } else if (user.role === 'student') {
           const student = await Student.findOne({ where: { userId: user.id } });
-          profile = student ? student.toJSON() : {};
+          if (student) {
+            profile = student.toJSON();
+            // Convert goals string back to array for frontend
+            if ((profile as any).goals && typeof (profile as any).goals === 'string') {
+              (profile as any).goals = (profile as any).goals.split('\n').filter((goal: string) => goal.trim());
+            }
+          }
         }
         return { ...user.toJSON(), profile };
       })
