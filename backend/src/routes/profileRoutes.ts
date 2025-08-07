@@ -8,6 +8,49 @@ import { requireProfileCompletion } from '../middleware/profileCompletionMiddlew
 
 const router = express.Router();
 
+// Auth middleware
+const authMiddleware = (req: any, res: any, next: any) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ message: 'No token provided' });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string; role: string };
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid token' });
+  }
+};
+
+// Test endpoint
+router.get('/test', (req, res) => {
+  res.json({ message: 'Profile routes are working', timestamp: new Date().toISOString() });
+});
+
+// Debug endpoint to check raw profile data
+router.get('/debug/:id', authMiddleware, async (req: express.Request & { user?: { id: string; role: string } }, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    let profileData = null;
+    if (user.role === 'teacher') {
+      profileData = await Teacher.findOne({ where: { userId: user.id } });
+    } else if (user.role === 'student') {
+      profileData = await Student.findOne({ where: { userId: user.id } });
+    }
+
+    res.json({
+      user: user.toJSON(),
+      profile: profileData ? profileData.toJSON() : null,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Debug profile error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Configure multer for memory storage
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -23,18 +66,7 @@ const upload = multer({
   }
 });
 
-const authMiddleware = (req: any, res: any, next: any) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-  if (!token) return res.status(401).json({ message: 'No token provided' });
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string; role: string }; // Changed to string for UUID
-    req.user = decoded;
-    next();
-  } catch (error) {
-    res.status(401).json({ message: 'Invalid token' });
-  }
-};
 
 // Profile picture upload endpoint
 router.post('/upload-picture', authMiddleware, upload.single('profilePicture'), async (req: express.Request & { user?: { id: string; role: string } }, res) => {
@@ -82,15 +114,27 @@ router.post('/upload-picture', authMiddleware, upload.single('profilePicture'), 
 // Update profile (PUT endpoint for editing)
 router.put('/', authMiddleware, async (req: express.Request & { user?: { id: string; role: string } }, res) => {
   try {
+    console.log('Profile update request received');
+    console.log('User ID:', req.user!.id);
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
     const user = await User.findByPk(req.user!.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Update user name if provided
-    if (req.body.name) {
-      await User.update({ name: req.body.name }, { where: { id: user.id } });
+    // Update user fields if provided
+    const userUpdateData: any = {};
+    if (req.body.name) userUpdateData.name = req.body.name;
+    if (req.body.bio) userUpdateData.bio = req.body.bio;
+    if (req.body.email) userUpdateData.email = req.body.email;
+    
+    if (Object.keys(userUpdateData).length > 0) {
+      console.log('Updating user with data:', userUpdateData);
+      await User.update(userUpdateData, { where: { id: user.id } });
+      console.log('User updated successfully');
     }
 
     if (user.role === 'teacher') {
+      console.log('Processing teacher profile update');
       const {
         subjects,
         qualifications,
@@ -110,7 +154,7 @@ router.put('/', authMiddleware, async (req: express.Request & { user?: { id: str
         socialLinks
       } = req.body;
 
-      await Teacher.upsert({
+      const teacherData = {
         userId: user.id,
         subjects,
         qualifications,
@@ -128,7 +172,11 @@ router.put('/', authMiddleware, async (req: express.Request & { user?: { id: str
         preferredStudentLevel,
         contactPreference,
         socialLinks
-      });
+      };
+      
+      console.log('Teacher data to upsert:', JSON.stringify(teacherData, null, 2));
+      const [teacherProfile, created] = await Teacher.upsert(teacherData);
+      console.log('Teacher profile upserted:', created ? 'created' : 'updated', teacherProfile.toJSON());
     } else if (user.role === 'student') {
       const {
         interests,
@@ -152,7 +200,7 @@ router.put('/', authMiddleware, async (req: express.Request & { user?: { id: str
       // Convert goals array to string for database storage
       const goalsString = Array.isArray(goals) ? goals.join('\n') : goals;
 
-      await Student.upsert({
+      const studentData = {
         userId: user.id,
         interests,
         academicLevel,
@@ -170,9 +218,14 @@ router.put('/', authMiddleware, async (req: express.Request & { user?: { id: str
         location,
         languages,
         socialLinks
-      });
+      };
+
+      console.log('Student data to upsert:', JSON.stringify(studentData, null, 2));
+      const [studentProfile, created] = await Student.upsert(studentData);
+      console.log('Student profile upserted:', created ? 'created' : 'updated', studentProfile.toJSON());
     }
 
+    console.log('Profile update completed successfully');
     res.json({ message: 'Profile updated successfully' });
   } catch (error) {
     console.error('Profile update error:', error);
