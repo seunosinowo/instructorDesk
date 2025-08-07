@@ -14,6 +14,13 @@ const router = express.Router();
 // Get all users (both teachers and students) for messaging
 router.get('/users', authMiddleware, requireProfileCompletion, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    console.log('Fetching users for messaging. Current user ID:', req.user!.id);
+    
+    const allUsers = await User.findAll({ 
+      attributes: ['id', 'name', 'email', 'role', 'profilePicture', 'emailConfirmed', 'profileCompleted'] 
+    });
+    console.log('All users in database:', allUsers.length);
+    
     const users = await User.findAll({ 
       where: { 
         emailConfirmed: true,
@@ -21,6 +28,10 @@ router.get('/users', authMiddleware, requireProfileCompletion, async (req: Authe
       }, 
       attributes: ['id', 'name', 'email', 'role', 'profilePicture'] 
     });
+    
+    console.log('Filtered users for messaging:', users.length);
+    console.log('Users:', users.map(u => ({ id: u.id, name: u.name, role: u.role })));
+    
     res.json(users);
   } catch (error) {
     console.error(error);
