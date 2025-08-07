@@ -1,119 +1,173 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { motion } from 'framer-motion';
-import { validateImageFile, resizeImage } from '../utils/imageUpload';
-import type { User, TeacherProfile, StudentProfile } from '../types';
+import axios from 'axios';
+import { 
+  User as UserIcon, BookOpen, GraduationCap, 
+  Award, Target, Star, Briefcase, 
+  Layout, Bookmark, Globe, CheckCircle, 
+  Users, Languages, Save, X, Plus,
+  ChevronLeft, Edit
+} from 'lucide-react';
+import type { TeacherProfile, StudentProfile } from '../types';
 
 const ProfileEditPage: React.FC = () => {
-  const [, setProfile] = useState<User & { profile?: TeacherProfile | StudentProfile } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
+  const userId = localStorage.getItem('userId');
+  const userRole = localStorage.getItem('role') || 'student';
+
+  // Basic user info
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [bio, setBio] = useState('');
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [profilePicturePreview, setProfilePicturePreview] = useState<string>('');
-  
-  const token = localStorage.getItem('token');
-  const navigate = useNavigate();
-  const userRole = localStorage.getItem('role');
-
-  // Form states for basic user info
-  const [name, setName] = useState('');
 
   // Teacher-specific states
-  const [teacherData, setTeacherData] = useState<Partial<TeacherProfile>>({
-    subjects: [],
-    qualifications: '',
-    experience: 0,
-    specializations: [],
-    teachingMethods: [],
-    availability: '',
-    hourlyRate: 0,
-    location: '',
-    languages: [],
-    certifications: [],
-    education: '',
-    achievements: [],
-    teachingPhilosophy: '',
-    preferredStudentLevel: [],
-    contactPreference: '',
-    socialLinks: {}
-  });
+  const [subjects, setSubjects] = useState<string[]>([]);
+  const [qualifications, setQualifications] = useState('');
+  const [experience, setExperience] = useState<number>(0);
+  const [specializations, setSpecializations] = useState<string[]>([]);
+  const [teachingMethods, setTeachingMethods] = useState<string[]>([]);
+  const [availability, setAvailability] = useState('');
+  const [hourlyRate, setHourlyRate] = useState<number>(0);
+  const [location, setLocation] = useState('');
+  const [languages, setLanguages] = useState<string[]>([]);
+  const [certifications, setCertifications] = useState<string[]>([]);
+  const [education, setEducation] = useState('');
+  const [achievements, setAchievements] = useState<string[]>([]);
+  const [teachingPhilosophy, setTeachingPhilosophy] = useState('');
+  const [preferredStudentLevel, setPreferredStudentLevel] = useState<string[]>([]);
+  const [contactPreference, setContactPreference] = useState('');
+  const [socialLinks, setSocialLinks] = useState<{
+    linkedin?: string;
+    website?: string;
+    twitter?: string;
+  }>({});
 
   // Student-specific states
-  const [studentData, setStudentData] = useState<Partial<StudentProfile>>({
-    interests: [],
-    academicLevel: '',
-    goals: [],
-    learningStyle: '',
-    preferredSubjects: [],
-    currentInstitution: '',
-    graduationYear: 0,
-    skills: [],
-    projects: [],
-    extracurriculars: [],
-    careerGoals: '',
-    preferredLearningTime: '',
-    budget: 0,
-    location: '',
-    languages: [],
-    socialLinks: {}
-  });
+  const [interests, setInterests] = useState<string[]>([]);
+  const [academicLevel, setAcademicLevel] = useState('');
+  const [currentInstitution, setCurrentInstitution] = useState('');
+  const [graduationYear, setGraduationYear] = useState<number>(0);
+  const [goals, setGoals] = useState<string[]>([]);
+  const [learningStyle, setLearningStyle] = useState('');
+  const [preferredSubjects, setPreferredSubjects] = useState<string[]>([]);
+  const [careerGoals, setCareerGoals] = useState('');
+  const [skills, setSkills] = useState<string[]>([]);
+  const [projects, setProjects] = useState<string[]>([]);
+  const [extracurriculars, setExtracurriculars] = useState<string[]>([]);
+  const [preferredLearningTime, setPreferredLearningTime] = useState('');
+  const [budget, setBudget] = useState<number>(0);
+  const [studentSocialLinks, setStudentSocialLinks] = useState<{
+    github?: string;
+    linkedin?: string;
+    portfolio?: string;
+  }>({});
 
   useEffect(() => {
     const fetchProfile = async () => {
+      if (!token || !userId) {
+        navigate('/login');
+        return;
+      }
+
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/profile/${localStorage.getItem('userId')}`, {
+        setLoading(true);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/profile/${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         
         const userData = response.data;
-        setProfile(userData);
+        console.log('Fetched profile data:', userData);
+        
+        // Set basic user info
         setName(userData.name || '');
+        setEmail(userData.email || '');
+        setBio(userData.bio || '');
         setProfilePicturePreview(userData.profilePicture || '');
-
+        
         if (userData.profile) {
           if (userRole === 'teacher') {
-            setTeacherData({
-              ...teacherData,
-              ...userData.profile
-            });
-          } else {
-            setStudentData({
-              ...studentData,
-              ...userData.profile
-            });
+            const profile = userData.profile as TeacherProfile;
+            setSubjects(profile.subjects || []);
+            setQualifications(profile.qualifications || '');
+            setExperience(profile.experience || 0);
+            setSpecializations(profile.specializations || []);
+            setTeachingMethods(profile.teachingMethods || []);
+            setAvailability(profile.availability || '');
+            setHourlyRate(profile.hourlyRate || 0);
+            setLocation(profile.location || '');
+            setLanguages(profile.languages || []);
+            setCertifications(profile.certifications || []);
+            setEducation(profile.education || '');
+            setAchievements(profile.achievements || []);
+            setTeachingPhilosophy(profile.teachingPhilosophy || '');
+            setPreferredStudentLevel(profile.preferredStudentLevel || []);
+            setContactPreference(profile.contactPreference || '');
+            setSocialLinks(profile.socialLinks || {});
+          } else if (userRole === 'student') {
+            const profile = userData.profile as StudentProfile;
+            setInterests(profile.interests || []);
+            setAcademicLevel(profile.academicLevel || '');
+            setCurrentInstitution(profile.currentInstitution || '');
+            setGraduationYear(profile.graduationYear || 0);
+            setGoals(profile.goals || []);
+            setLearningStyle(profile.learningStyle || '');
+            setPreferredSubjects(profile.preferredSubjects || []);
+            setCareerGoals(profile.careerGoals || '');
+            setSkills(profile.skills || []);
+            setProjects(profile.projects || []);
+            setExtracurriculars(profile.extracurriculars || []);
+            setPreferredLearningTime(profile.preferredLearningTime || '');
+            setBudget(profile.budget || 0);
+            setLocation(profile.location || '');
+            setLanguages(profile.languages || []);
+            setStudentSocialLinks(profile.socialLinks || {});
           }
         }
-        
-        setLoading(false);
       } catch (err) {
-        console.error('Failed to fetch profile:', err);
+        console.error('Profile fetch error:', err);
         setError('Failed to load profile data');
+      } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [token]);
+  }, [token, userId, userRole, navigate]);
 
-  const handleProfilePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const validation = validateImageFile(file);
-      if (!validation.isValid) {
-        setError(validation.error || 'Invalid file');
+      // Basic validation
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+
+      if (!allowedTypes.includes(file.type)) {
+        setError('Please select a valid image file (JPEG, PNG, or GIF)');
         return;
       }
 
-      try {
-        setProfilePicture(file);
-        const resizedImage = await resizeImage(file, 400, 400);
-        setProfilePicturePreview(resizedImage);
-      } catch (err) {
-        setError('Failed to process image');
+      if (file.size > maxSize) {
+        setError('Image size should be less than 5MB');
+        return;
       }
+
+      setProfilePicture(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProfilePicturePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -129,40 +183,114 @@ const ProfileEditPage: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleSave called');
     setSaving(true);
     setError('');
     setSuccess('');
 
     try {
-      // Upload profile picture if changed
+      // First, upload profile picture if a new one was selected
       if (profilePicture) {
         const formData = new FormData();
         formData.append('profilePicture', profilePicture);
         
-        await axios.post(`${import.meta.env.VITE_API_URL}/upload/profile-picture`, formData, {
+        await axios.post(`${import.meta.env.VITE_API_URL}/profile/upload-picture`, formData, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
-          }
+          },
+        });
+      }
+      
+      // Prepare profile data based on role
+      let profileData = {};
+      console.log('User role:', userRole);
+      
+      if (userRole === 'teacher') {
+        profileData = {
+          subjects,
+          qualifications,
+          experience: Number(experience),
+          specializations,
+          teachingMethods,
+          availability,
+          hourlyRate: Number(hourlyRate),
+          location,
+          languages,
+          certifications,
+          education,
+          achievements,
+          teachingPhilosophy,
+          preferredStudentLevel,
+          contactPreference,
+          socialLinks
+        };
+        console.log('Teacher profile data:', {
+          hourlyRate: hourlyRate,
+          hourlyRateType: typeof hourlyRate,
+          hourlyRateNumber: Number(hourlyRate),
+          experience: experience,
+          experienceType: typeof experience,
+          experienceNumber: Number(experience)
+        });
+      } else if (userRole === 'student') {
+        profileData = {
+          interests,
+          academicLevel,
+          currentInstitution,
+          graduationYear: Number(graduationYear),
+          goals,
+          learningStyle,
+          preferredSubjects,
+          careerGoals,
+          skills,
+          projects,
+          extracurriculars,
+          preferredLearningTime,
+          budget: Number(budget),
+          location,
+          languages,
+          socialLinks: studentSocialLinks
+        };
+        console.log('Student profile data:', {
+          budget: budget,
+          budgetType: typeof budget,
+          budgetNumber: Number(budget),
+          graduationYear: graduationYear,
+          graduationYearType: typeof graduationYear,
+          graduationYearNumber: Number(graduationYear)
         });
       }
 
       // Update profile data
-      const profileUpdateData = {
+      const updateData = {
         name,
-        ...(userRole === 'teacher' ? teacherData : studentData)
+        bio,
+        ...profileData
       };
       
-      await axios.put(`${import.meta.env.VITE_API_URL}/profile`, profileUpdateData, {
-        headers: { Authorization: `Bearer ${token}` }
+      console.log('Profile data to save:', updateData);
+      console.log('API URL:', `${import.meta.env.VITE_API_URL}/profile`);
+      console.log('Token:', token ? 'Present' : 'Missing');
+      
+      const response = await axios.put(`${import.meta.env.VITE_API_URL}/profile`, updateData, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-
+      
+      console.log('Update response:', response.data);
+      
+      // Dispatch custom event to notify profile page of update
+      window.dispatchEvent(new CustomEvent('profileUpdated'));
+      
       setSuccess('Profile updated successfully!');
+      
+      // Force a page reload to ensure fresh data
       setTimeout(() => {
-        navigate('/dashboard');
-      }, 2000);
+        window.location.href = '/profile';
+      }, 1500);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to update profile');
+      console.error('Save error:', err);
+      setError(err.response?.data?.message || 'Failed to update profile');
     } finally {
       setSaving(false);
     }
@@ -171,44 +299,43 @@ const ProfileEditPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-primary"></div>
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-orange-500 mb-4"></div>
+          <p className="text-gray-600">Loading your profile...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation Header */}
-      <div className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white">
+      {/* Sticky Navigation Header */}
+      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="text-orange-primary hover:text-orange-secondary font-semibold"
-              >
-                ← Back to Dashboard
-              </button>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="text-orange-primary hover:text-orange-secondary font-semibold"
-              >
-                View Profile
-              </button>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-600">Welcome, {name}</span>
-              <button
-                onClick={() => {
-                  localStorage.clear();
-                  navigate('/login');
-                }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                Logout
-              </button>
-            </div>
+            <button
+              onClick={() => navigate('/profile')}
+              className="flex items-center text-gray-600 hover:text-orange-600 transition-colors group"
+            >
+              <ChevronLeft size={20} className="mr-1 group-hover:-translate-x-0.5 transition-transform" />
+              Back
+            </button>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-800 bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
+              Edit Profile
+            </h1>
+            <button
+              type="submit"
+              form="profile-edit-form"
+              disabled={saving}
+              className={`px-4 py-2 rounded-lg font-semibold transition duration-300 flex items-center ${
+                saving
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600'
+              }`}
+            >
+              <Save size={18} className="mr-2" />
+              {saving ? 'Saving...' : 'Save'}
+            </button>
           </div>
         </div>
       </div>
@@ -217,35 +344,50 @@ const ProfileEditPage: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="max-w-4xl mx-auto mt-10 p-8 bg-white rounded-xl shadow-2xl"
+        className="max-w-4xl mx-auto px-4 py-8"
       >
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-orange-primary mb-2">Edit Profile</h2>
-          <p className="text-gray-600">Update your profile information</p>
-        </div>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 shadow-sm"
+          >
+            {error}
+          </motion.div>
+        )}
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-          {error}
-        </div>
-      )}
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-6 shadow-sm"
+          >
+            {success}
+          </motion.div>
+        )}
 
-      {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
-          {success}
-        </div>
-      )}
-
-      <form onSubmit={handleSave} className="space-y-8">
-        {/* Basic Information Section */}
-        <div className="bg-gray-50 p-6 rounded-lg">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Basic Information</h3>
-          
-          {/* Profile Picture */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
-            <div className="flex items-center space-x-4">
-              <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200">
+        <form 
+          id="profile-edit-form"
+          onSubmit={handleSave} 
+          className="space-y-8"
+        >
+          {/* Basic Information Section */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-2xl shadow-md p-6 border border-orange-100"
+          >
+            <div className="flex items-center mb-6">
+              <div className="bg-orange-100 p-2 rounded-full mr-3">
+                <UserIcon className="text-orange-600" size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">Basic Information</h3>
+            </div>
+            
+            {/* Profile Picture */}
+            <div className="mb-6 flex flex-col items-center">
+              <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg mb-4">
                 {profilePicturePreview ? (
                   <img 
                     src={profilePicturePreview} 
@@ -253,11 +395,12 @@ const ProfileEditPage: React.FC = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-orange-primary flex items-center justify-center text-white font-bold text-2xl">
+                  <div className="w-full h-full bg-gradient-to-r from-orange-400 to-amber-400 flex items-center justify-center text-white font-bold text-3xl">
                     {name.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                 )}
               </div>
+              
               <div>
                 <input
                   type="file"
@@ -268,68 +411,165 @@ const ProfileEditPage: React.FC = () => {
                 />
                 <label
                   htmlFor="profile-picture"
-                  className="bg-orange-primary text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-orange-secondary transition duration-300"
+                  className="inline-flex items-center bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-2 rounded-lg cursor-pointer hover:from-orange-600 hover:to-amber-600 transition-all shadow-md"
                 >
+                  <Edit size={16} className="mr-2" />
                   Change Picture
                 </label>
+                <p className="text-xs text-gray-500 mt-2 text-center">Max 5MB (JPEG, PNG, GIF)</p>
               </div>
             </div>
-          </div>
 
-          {/* Name */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              required
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed focus:outline-none"
+                  readOnly
+                  disabled
+                />
+                <p className="text-xs text-gray-500 mt-1">Email cannot be changed as it's used for sign-in</p>
+              </div>
+            </div>
+            
+            <div className="mt-5">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-300"
+                rows={3}
+                placeholder="Tell us about yourself..."
+              />
+            </div>
+          </motion.div>
+
+          {/* Role-specific sections */}
+          {userRole === 'teacher' ? (
+            <TeacherEditSection 
+              subjects={subjects}
+              setSubjects={setSubjects}
+              qualifications={qualifications}
+              setQualifications={setQualifications}
+              experience={experience}
+              setExperience={setExperience}
+              specializations={specializations}
+              setSpecializations={setSpecializations}
+              teachingMethods={teachingMethods}
+              setTeachingMethods={setTeachingMethods}
+              availability={availability}
+              setAvailability={setAvailability}
+              hourlyRate={hourlyRate}
+              setHourlyRate={setHourlyRate}
+              location={location}
+              setLocation={setLocation}
+              languages={languages}
+              setLanguages={setLanguages}
+              certifications={certifications}
+              setCertifications={setCertifications}
+              education={education}
+              setEducation={setEducation}
+              achievements={achievements}
+              setAchievements={setAchievements}
+              teachingPhilosophy={teachingPhilosophy}
+              setTeachingPhilosophy={setTeachingPhilosophy}
+              preferredStudentLevel={preferredStudentLevel}
+              setPreferredStudentLevel={setPreferredStudentLevel}
+              contactPreference={contactPreference}
+              setContactPreference={setContactPreference}
+              socialLinks={socialLinks}
+              setSocialLinks={setSocialLinks}
+              addToArray={addToArray}
+              removeFromArray={removeFromArray}
             />
-          </div>
+          ) : userRole === 'student' ? (
+            <StudentEditSection 
+              interests={interests}
+              setInterests={setInterests}
+              academicLevel={academicLevel}
+              setAcademicLevel={setAcademicLevel}
+              currentInstitution={currentInstitution}
+              setCurrentInstitution={setCurrentInstitution}
+              graduationYear={graduationYear}
+              setGraduationYear={setGraduationYear}
+              goals={goals}
+              setGoals={setGoals}
+              learningStyle={learningStyle}
+              setLearningStyle={setLearningStyle}
+              preferredSubjects={preferredSubjects}
+              setPreferredSubjects={setPreferredSubjects}
+              careerGoals={careerGoals}
+              setCareerGoals={setCareerGoals}
+              skills={skills}
+              setSkills={setSkills}
+              projects={projects}
+              setProjects={setProjects}
+              extracurriculars={extracurriculars}
+              setExtracurriculars={setExtracurriculars}
+              preferredLearningTime={preferredLearningTime}
+              setPreferredLearningTime={setPreferredLearningTime}
+              budget={budget}
+              setBudget={setBudget}
+              location={location}
+              setLocation={setLocation}
+              languages={languages}
+              setLanguages={setLanguages}
+              socialLinks={studentSocialLinks}
+              setSocialLinks={setStudentSocialLinks}
+              addToArray={addToArray}
+              removeFromArray={removeFromArray}
+            />
+          ) : (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              <p>User role not recognized: {userRole}</p>
+              <p>Please make sure you're logged in properly.</p>
+            </div>
+          )}
 
-
-        </div>
-
-        {/* Role-specific sections */}
-        {userRole === 'teacher' ? (
-          <TeacherEditSection 
-            data={teacherData} 
-            setData={setTeacherData}
-            addToArray={addToArray}
-            removeFromArray={removeFromArray}
-          />
-        ) : (
-          <StudentEditSection 
-            data={studentData} 
-            setData={setStudentData}
-            addToArray={addToArray}
-            removeFromArray={removeFromArray}
-          />
-        )}
-
-        {/* Save Button */}
-        <div className="flex justify-end pt-6 border-t border-gray-200">
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard')}
-            className="mr-4 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition duration-300"
+          {/* Save Button */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-2xl shadow-md p-6 border border-orange-100"
           >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className={`px-8 py-3 rounded-lg font-semibold transition duration-300 ${
-              saving
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                : 'bg-orange-primary text-white hover:bg-orange-secondary'
-            }`}
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
-      </form>
+            <div className="flex justify-between items-center">
+              <button
+                type="button"
+                onClick={() => navigate('/profile')}
+                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition duration-300 flex items-center"
+              >
+                <ChevronLeft size={18} className="mr-2" />
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className={`px-8 py-3 rounded-xl font-semibold transition duration-300 flex items-center ${
+                  saving
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 shadow-md'
+                }`}
+              >
+                <Save size={18} className="mr-2" />
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </motion.div>
+        </form>
       </motion.div>
     </div>
   );
@@ -337,468 +577,268 @@ const ProfileEditPage: React.FC = () => {
 
 // Teacher Edit Section Component
 const TeacherEditSection: React.FC<{
-  data: Partial<TeacherProfile>;
-  setData: (data: Partial<TeacherProfile>) => void;
+  subjects: string[];
+  setSubjects: (subjects: string[]) => void;
+  qualifications: string;
+  setQualifications: (qualifications: string) => void;
+  experience: number;
+  setExperience: (experience: number) => void;
+  specializations: string[];
+  setSpecializations: (specializations: string[]) => void;
+  teachingMethods: string[];
+  setTeachingMethods: (methods: string[]) => void;
+  availability: string;
+  setAvailability: (availability: string) => void;
+  hourlyRate: number;
+  setHourlyRate: (rate: number) => void;
+  location: string;
+  setLocation: (location: string) => void;
+  languages: string[];
+  setLanguages: (languages: string[]) => void;
+  certifications: string[];
+  setCertifications: (certifications: string[]) => void;
+  education: string;
+  setEducation: (education: string) => void;
+  achievements: string[];
+  setAchievements: (achievements: string[]) => void;
+  teachingPhilosophy: string;
+  setTeachingPhilosophy: (philosophy: string) => void;
+  preferredStudentLevel: string[];
+  setPreferredStudentLevel: (levels: string[]) => void;
+  contactPreference: string;
+  setContactPreference: (preference: string) => void;
+  socialLinks: { linkedin?: string; website?: string; twitter?: string };
+  setSocialLinks: (links: { linkedin?: string; website?: string; twitter?: string }) => void;
   addToArray: (array: string[], setter: (arr: string[]) => void, value: string) => void;
   removeFromArray: (array: string[], setter: (arr: string[]) => void, index: number) => void;
-}> = ({ data, setData, addToArray, removeFromArray }) => {
+}> = ({ 
+  subjects, setSubjects, qualifications, setQualifications, experience, setExperience,
+  specializations, setSpecializations, teachingMethods, setTeachingMethods,
+  availability, setAvailability, hourlyRate, setHourlyRate, location, setLocation,
+  languages, setLanguages, certifications, setCertifications, education, setEducation,
+  achievements, setAchievements, teachingPhilosophy, setTeachingPhilosophy,
+  preferredStudentLevel, setPreferredStudentLevel, contactPreference, setContactPreference,
+  socialLinks, setSocialLinks, addToArray, removeFromArray
+}) => {
   return (
-    <div className="space-y-6">
-      <div className="bg-gray-50 p-6 rounded-lg">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Teaching Information</h3>
+    <div className="space-y-8">
+      {/* Teaching Information */}
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-orange-100">
+        <div className="flex items-center mb-6">
+          <BookOpen className="text-orange-500 mr-3" size={24} />
+          <h3 className="text-xl font-bold text-gray-800">Teaching Information</h3>
+        </div>
         
-        {/* Subjects */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Subjects</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {data.subjects?.map((subject, index) => (
-              <span key={index} className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm flex items-center">
-                {subject}
-                <button
-                  type="button"
-                  onClick={() => removeFromArray(data.subjects!, (arr) => setData({...data, subjects: arr}), index)}
-                  className="ml-2 text-orange-600 hover:text-orange-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <div className="flex">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Qualifications</label>
             <input
               type="text"
-              placeholder="Add subject"
-              className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addToArray(data.subjects || [], (arr) => setData({...data, subjects: arr}), e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
+              value={qualifications}
+              onChange={(e) => setQualifications(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="e.g., PhD in Mathematics"
             />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                addToArray(data.subjects || [], (arr) => setData({...data, subjects: arr}), input.value);
-                input.value = '';
-              }}
-              className="bg-orange-primary text-white px-4 rounded-r-lg hover:bg-orange-secondary"
-            >
-              Add
-            </button>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Years of Experience</label>
+            <input
+              type="number"
+              value={experience}
+              onChange={(e) => setExperience(Number(e.target.value))}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              min="0"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Hourly Rate ($)</label>
+            <input
+              type="number"
+              value={hourlyRate}
+              onChange={(e) => setHourlyRate(Number(e.target.value))}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              min="0"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="e.g., New York, NY"
+            />
           </div>
         </div>
 
-        {/* Qualifications */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Qualifications</label>
+        <div className="mt-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Availability</label>
           <input
             type="text"
-            value={data.qualifications || ''}
-            onChange={(e) => setData({...data, qualifications: e.target.value})}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
+            value={availability}
+            onChange={(e) => setAvailability(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            placeholder="e.g., Weekdays 9AM-5PM"
           />
         </div>
 
-        {/* Experience */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Years of Experience</label>
-          <input
-            type="number"
-            value={data.experience || 0}
-            onChange={(e) => setData({...data, experience: parseInt(e.target.value) || 0})}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-          />
-        </div>
-
-        {/* Hourly Rate */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Hourly Rate (USD)</label>
-          <input
-            type="number"
-            value={data.hourlyRate || 0}
-            onChange={(e) => setData({...data, hourlyRate: parseFloat(e.target.value) || 0})}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-          />
-        </div>
-
-        {/* Education */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Education Background</label>
+        <div className="mt-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Education</label>
           <textarea
-            value={data.education || ''}
-            onChange={(e) => setData({...data, education: e.target.value})}
+            value={education}
+            onChange={(e) => setEducation(e.target.value)}
             rows={3}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            placeholder="Describe your educational background..."
           />
         </div>
 
-        {/* Teaching Philosophy */}
-        <div className="mb-4">
+        <div className="mt-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">Teaching Philosophy</label>
           <textarea
-            value={data.teachingPhilosophy || ''}
-            onChange={(e) => setData({...data, teachingPhilosophy: e.target.value})}
-            rows={3}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-          />
-        </div>
-      </div>
-
-      {/* Specializations & Methods */}
-      <div className="bg-gray-50 p-6 rounded-lg">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Teaching Details</h3>
-        
-        {/* Specializations */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Specializations</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {data.specializations?.map((spec, index) => (
-              <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center">
-                {spec}
-                <button
-                  type="button"
-                  onClick={() => removeFromArray(data.specializations!, (arr) => setData({...data, specializations: arr}), index)}
-                  className="ml-2 text-blue-600 hover:text-blue-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <div className="flex">
-            <input
-              type="text"
-              placeholder="Add specialization"
-              className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addToArray(data.specializations || [], (arr) => setData({...data, specializations: arr}), e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                addToArray(data.specializations || [], (arr) => setData({...data, specializations: arr}), input.value);
-                input.value = '';
-              }}
-              className="bg-orange-primary text-white px-4 rounded-r-lg hover:bg-orange-secondary"
-            >
-              Add
-            </button>
-          </div>
-        </div>
-
-        {/* Teaching Methods */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Teaching Methods</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {data.teachingMethods?.map((method, index) => (
-              <span key={index} className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm flex items-center">
-                {method}
-                <button
-                  type="button"
-                  onClick={() => removeFromArray(data.teachingMethods!, (arr) => setData({...data, teachingMethods: arr}), index)}
-                  className="ml-2 text-green-600 hover:text-green-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <div className="flex">
-            <input
-              type="text"
-              placeholder="Add teaching method"
-              className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addToArray(data.teachingMethods || [], (arr) => setData({...data, teachingMethods: arr}), e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                addToArray(data.teachingMethods || [], (arr) => setData({...data, teachingMethods: arr}), input.value);
-                input.value = '';
-              }}
-              className="bg-orange-primary text-white px-4 rounded-r-lg hover:bg-orange-secondary"
-            >
-              Add
-            </button>
-          </div>
-        </div>
-
-        {/* Preferred Student Level */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Student Level</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {data.preferredStudentLevel?.map((level, index) => (
-              <span key={index} className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm flex items-center">
-                {level}
-                <button
-                  type="button"
-                  onClick={() => removeFromArray(data.preferredStudentLevel!, (arr) => setData({...data, preferredStudentLevel: arr}), index)}
-                  className="ml-2 text-purple-600 hover:text-purple-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <div className="flex">
-            <input
-              type="text"
-              placeholder="Add student level (e.g., Beginner, Intermediate)"
-              className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addToArray(data.preferredStudentLevel || [], (arr) => setData({...data, preferredStudentLevel: arr}), e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                addToArray(data.preferredStudentLevel || [], (arr) => setData({...data, preferredStudentLevel: arr}), input.value);
-                input.value = '';
-              }}
-              className="bg-orange-primary text-white px-4 rounded-r-lg hover:bg-orange-secondary"
-            >
-              Add
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Professional Details */}
-      <div className="bg-gray-50 p-6 rounded-lg">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Professional Details</h3>
-        
-        {/* Availability */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Availability</label>
-          <textarea
-            value={data.availability || ''}
-            onChange={(e) => setData({...data, availability: e.target.value})}
-            rows={2}
-            placeholder="e.g., Weekdays 9 AM - 5 PM, Weekends flexible"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
+            value={teachingPhilosophy}
+            onChange={(e) => setTeachingPhilosophy(e.target.value)}
+            rows={4}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            placeholder="Describe your teaching philosophy and approach..."
           />
         </div>
 
-        {/* Location */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-          <input
-            type="text"
-            value={data.location || ''}
-            onChange={(e) => setData({...data, location: e.target.value})}
-            placeholder="e.g., New York, NY or Online"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-          />
-        </div>
-
-        {/* Languages */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Languages</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {data.languages?.map((language, index) => (
-              <span key={index} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm flex items-center">
-                {language}
-                <button
-                  type="button"
-                  onClick={() => removeFromArray(data.languages!, (arr) => setData({...data, languages: arr}), index)}
-                  className="ml-2 text-indigo-600 hover:text-indigo-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <div className="flex">
-            <input
-              type="text"
-              placeholder="Add language"
-              className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addToArray(data.languages || [], (arr) => setData({...data, languages: arr}), e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                addToArray(data.languages || [], (arr) => setData({...data, languages: arr}), input.value);
-                input.value = '';
-              }}
-              className="bg-orange-primary text-white px-4 rounded-r-lg hover:bg-orange-secondary"
-            >
-              Add
-            </button>
-          </div>
-        </div>
-
-        {/* Contact Preference */}
-        <div className="mb-4">
+        <div className="mt-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">Contact Preference</label>
           <select
-            value={data.contactPreference || ''}
-            onChange={(e) => setData({...data, contactPreference: e.target.value})}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
+            value={contactPreference}
+            onChange={(e) => setContactPreference(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="">Select preference</option>
-            <option value="Email">Email</option>
-            <option value="Phone">Phone</option>
-            <option value="Platform Messages">Platform Messages</option>
-            <option value="Video Call">Video Call</option>
+            <option value="email">Email</option>
+            <option value="phone">Phone</option>
+            <option value="video">Video Call</option>
+            <option value="message">Message</option>
           </select>
         </div>
       </div>
 
-      {/* Achievements & Certifications */}
-      <div className="bg-gray-50 p-6 rounded-lg">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Achievements & Awards</h3>
-        
-        {/* Certifications */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Certifications</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {data.certifications?.map((cert, index) => (
-              <span key={index} className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm flex items-center">
-                {cert}
-                <button
-                  type="button"
-                  onClick={() => removeFromArray(data.certifications!, (arr) => setData({...data, certifications: arr}), index)}
-                  className="ml-2 text-yellow-600 hover:text-yellow-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <div className="flex">
-            <input
-              type="text"
-              placeholder="Add certification"
-              className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addToArray(data.certifications || [], (arr) => setData({...data, certifications: arr}), e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                addToArray(data.certifications || [], (arr) => setData({...data, certifications: arr}), input.value);
-                input.value = '';
-              }}
-              className="bg-orange-primary text-white px-4 rounded-r-lg hover:bg-orange-secondary"
-            >
-              Add
-            </button>
-          </div>
-        </div>
+      {/* Subjects */}
+      <ArrayInputSection
+        title="Subjects"
+        icon={<Layout className="text-orange-500" size={24} />}
+        items={subjects}
+        setItems={setSubjects}
+        placeholder="Add subject (e.g., Mathematics)"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
 
-        {/* Achievements */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Achievements</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {data.achievements?.map((achievement, index) => (
-              <span key={index} className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm flex items-center">
-                {achievement}
-                <button
-                  type="button"
-                  onClick={() => removeFromArray(data.achievements!, (arr) => setData({...data, achievements: arr}), index)}
-                  className="ml-2 text-red-600 hover:text-red-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <div className="flex">
-            <input
-              type="text"
-              placeholder="Add achievement"
-              className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addToArray(data.achievements || [], (arr) => setData({...data, achievements: arr}), e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                addToArray(data.achievements || [], (arr) => setData({...data, achievements: arr}), input.value);
-                input.value = '';
-              }}
-              className="bg-orange-primary text-white px-4 rounded-r-lg hover:bg-orange-secondary"
-            >
-              Add
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Specializations */}
+      <ArrayInputSection
+        title="Specializations"
+        icon={<Bookmark className="text-orange-500" size={24} />}
+        items={specializations}
+        setItems={setSpecializations}
+        placeholder="Add specialization"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
+
+      {/* Teaching Methods */}
+      <ArrayInputSection
+        title="Teaching Methods"
+        icon={<CheckCircle className="text-orange-500" size={24} />}
+        items={teachingMethods}
+        setItems={setTeachingMethods}
+        placeholder="Add teaching method"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
+
+      {/* Preferred Student Level */}
+      <ArrayInputSection
+        title="Preferred Student Level"
+        icon={<GraduationCap className="text-orange-500" size={24} />}
+        items={preferredStudentLevel}
+        setItems={setPreferredStudentLevel}
+        placeholder="Add student level (e.g., Beginner, Intermediate)"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
+
+      {/* Languages */}
+      <ArrayInputSection
+        title="Languages"
+        icon={<Languages className="text-orange-500" size={24} />}
+        items={languages}
+        setItems={setLanguages}
+        placeholder="Add language"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
+
+      {/* Certifications */}
+      <ArrayInputSection
+        title="Certifications"
+        icon={<Award className="text-orange-500" size={24} />}
+        items={certifications}
+        setItems={setCertifications}
+        placeholder="Add certification"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
+
+      {/* Achievements */}
+      <ArrayInputSection
+        title="Achievements"
+        icon={<Star className="text-orange-500" size={24} />}
+        items={achievements}
+        setItems={setAchievements}
+        placeholder="Add achievement"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
 
       {/* Social Links */}
-      <div className="bg-gray-50 p-6 rounded-lg">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Social Links</h3>
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-orange-100">
+        <div className="flex items-center mb-6">
+          <Globe className="text-orange-500 mr-3" size={24} />
+          <h3 className="text-xl font-bold text-gray-800">Social Links</h3>
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn</label>
             <input
               type="url"
-              value={data.socialLinks?.linkedin || ''}
-              onChange={(e) => setData({...data, socialLinks: {...(data.socialLinks || {}), linkedin: e.target.value}})}
+              value={socialLinks.linkedin || ''}
+              onChange={(e) => setSocialLinks({...socialLinks, linkedin: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="https://linkedin.com/in/yourprofile"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
             />
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
             <input
               type="url"
-              value={data.socialLinks?.website || ''}
-              onChange={(e) => setData({...data, socialLinks: {...(data.socialLinks || {}), website: e.target.value}})}
+              value={socialLinks.website || ''}
+              onChange={(e) => setSocialLinks({...socialLinks, website: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="https://yourwebsite.com"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
             />
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Twitter</label>
             <input
               type="url"
-              value={data.socialLinks?.twitter || ''}
-              onChange={(e) => setData({...data, socialLinks: {...(data.socialLinks || {}), twitter: e.target.value}})}
+              value={socialLinks.twitter || ''}
+              onChange={(e) => setSocialLinks({...socialLinks, twitter: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="https://twitter.com/yourhandle"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
             />
           </div>
         </div>
@@ -809,481 +849,346 @@ const TeacherEditSection: React.FC<{
 
 // Student Edit Section Component
 const StudentEditSection: React.FC<{
-  data: Partial<StudentProfile>;
-  setData: (data: Partial<StudentProfile>) => void;
+  interests: string[];
+  setInterests: (interests: string[]) => void;
+  academicLevel: string;
+  setAcademicLevel: (level: string) => void;
+  currentInstitution: string;
+  setCurrentInstitution: (institution: string) => void;
+  graduationYear: number;
+  setGraduationYear: (year: number) => void;
+  goals: string[];
+  setGoals: (goals: string[]) => void;
+  learningStyle: string;
+  setLearningStyle: (style: string) => void;
+  preferredSubjects: string[];
+  setPreferredSubjects: (subjects: string[]) => void;
+  careerGoals: string;
+  setCareerGoals: (goals: string) => void;
+  skills: string[];
+  setSkills: (skills: string[]) => void;
+  projects: string[];
+  setProjects: (projects: string[]) => void;
+  extracurriculars: string[];
+  setExtracurriculars: (activities: string[]) => void;
+  preferredLearningTime: string;
+  setPreferredLearningTime: (time: string) => void;
+  budget: number;
+  setBudget: (budget: number) => void;
+  location: string;
+  setLocation: (location: string) => void;
+  languages: string[];
+  setLanguages: (languages: string[]) => void;
+  socialLinks: { github?: string; linkedin?: string; portfolio?: string };
+  setSocialLinks: (links: { github?: string; linkedin?: string; portfolio?: string }) => void;
   addToArray: (array: string[], setter: (arr: string[]) => void, value: string) => void;
   removeFromArray: (array: string[], setter: (arr: string[]) => void, index: number) => void;
-}> = ({ data, setData, addToArray, removeFromArray }) => {
+}> = ({ 
+  interests, setInterests, academicLevel, setAcademicLevel, currentInstitution, setCurrentInstitution,
+  graduationYear, setGraduationYear, goals, setGoals, learningStyle, setLearningStyle,
+  preferredSubjects, setPreferredSubjects, careerGoals, setCareerGoals, skills, setSkills,
+  projects, setProjects, extracurriculars, setExtracurriculars,
+  preferredLearningTime, setPreferredLearningTime, budget, setBudget, location, setLocation,
+  languages, setLanguages, socialLinks, setSocialLinks, addToArray, removeFromArray
+}) => {
   return (
-    <div className="space-y-6">
-      <div className="bg-gray-50 p-6 rounded-lg">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Academic Information</h3>
+    <div className="space-y-8">
+      {/* Academic Information */}
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-orange-100">
+        <div className="flex items-center mb-6">
+          <GraduationCap className="text-orange-500 mr-3" size={24} />
+          <h3 className="text-xl font-bold text-gray-800">Academic Information</h3>
+        </div>
         
-        {/* Interests */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Interests</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {data.interests?.map((interest, index) => (
-              <span key={index} className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm flex items-center">
-                {interest}
-                <button
-                  type="button"
-                  onClick={() => removeFromArray(data.interests!, (arr) => setData({...data, interests: arr}), index)}
-                  className="ml-2 text-orange-600 hover:text-orange-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Academic Level</label>
+            <select
+              value={academicLevel}
+              onChange={(e) => setAcademicLevel(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="">Select level</option>
+              <option value="High School">High School</option>
+              <option value="College/University">College/University</option>
+              <option value="Graduate">Graduate</option>
+              <option value="Professional">Professional</option>
+            </select>
           </div>
-          <div className="flex">
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Current Institution</label>
             <input
               type="text"
-              placeholder="Add interest"
-              className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addToArray(data.interests || [], (arr) => setData({...data, interests: arr}), e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
+              value={currentInstitution}
+              onChange={(e) => setCurrentInstitution(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="e.g., Harvard University"
             />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                addToArray(data.interests || [], (arr) => setData({...data, interests: arr}), input.value);
-                input.value = '';
-              }}
-              className="bg-orange-primary text-white px-4 rounded-r-lg hover:bg-orange-secondary"
-            >
-              Add
-            </button>
           </div>
-        </div>
-
-        {/* Academic Level */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Academic Level</label>
-          <select
-            value={data.academicLevel || ''}
-            onChange={(e) => setData({...data, academicLevel: e.target.value})}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-          >
-            <option value="">Select level</option>
-            <option value="Elementary School">Elementary School</option>
-            <option value="Middle School">Middle School</option>
-            <option value="High School">High School</option>
-            <option value="College/University">College/University</option>
-            <option value="Graduate School">Graduate School</option>
-            <option value="Professional Development">Professional Development</option>
-          </select>
-        </div>
-
-        {/* Current Institution */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Current Institution</label>
-          <input
-            type="text"
-            value={data.currentInstitution || ''}
-            onChange={(e) => setData({...data, currentInstitution: e.target.value})}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-          />
-        </div>
-
-        {/* Goals */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Learning Goals</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {data.goals?.map((goal, index) => (
-              <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm flex items-center">
-                {goal}
-                <button
-                  type="button"
-                  onClick={() => removeFromArray(data.goals!, (arr) => setData({...data, goals: arr}), index)}
-                  className="ml-2 text-blue-600 hover:text-blue-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Graduation Year</label>
+            <input
+              type="number"
+              value={graduationYear}
+              onChange={(e) => setGraduationYear(Number(e.target.value))}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              min="1900"
+              max="2030"
+            />
           </div>
-          <div className="flex">
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
             <input
               type="text"
-              placeholder="Add learning goal"
-              className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addToArray(data.goals || [], (arr) => setData({...data, goals: arr}), e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="e.g., New York, NY"
             />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                addToArray(data.goals || [], (arr) => setData({...data, goals: arr}), input.value);
-                input.value = '';
-              }}
-              className="bg-orange-primary text-white px-4 rounded-r-lg hover:bg-orange-secondary"
-            >
-              Add
-            </button>
           </div>
         </div>
 
-        {/* Learning Style */}
-        <div className="mb-4">
+        <div className="mt-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">Learning Style</label>
           <select
-            value={data.learningStyle || ''}
-            onChange={(e) => setData({...data, learningStyle: e.target.value})}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
+            value={learningStyle}
+            onChange={(e) => setLearningStyle(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <option value="">Select learning style</option>
             <option value="Visual">Visual</option>
             <option value="Auditory">Auditory</option>
             <option value="Kinesthetic">Kinesthetic</option>
             <option value="Reading/Writing">Reading/Writing</option>
-            <option value="Mixed">Mixed</option>
           </select>
         </div>
 
-        {/* Preferred Subjects */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Subjects</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {data.preferredSubjects?.map((subject, index) => (
-              <span key={index} className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm flex items-center">
-                {subject}
-                <button
-                  type="button"
-                  onClick={() => removeFromArray(data.preferredSubjects!, (arr) => setData({...data, preferredSubjects: arr}), index)}
-                  className="ml-2 text-green-600 hover:text-green-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <div className="flex">
-            <input
-              type="text"
-              placeholder="Add preferred subject"
-              className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addToArray(data.preferredSubjects || [], (arr) => setData({...data, preferredSubjects: arr}), e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                addToArray(data.preferredSubjects || [], (arr) => setData({...data, preferredSubjects: arr}), input.value);
-                input.value = '';
-              }}
-              className="bg-orange-primary text-white px-4 rounded-r-lg hover:bg-orange-secondary"
-            >
-              Add
-            </button>
-          </div>
-        </div>
-
-        {/* Graduation Year */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Graduation Year</label>
-          <input
-            type="number"
-            value={data.graduationYear || ''}
-            onChange={(e) => setData({...data, graduationYear: parseInt(e.target.value) || 0})}
-            placeholder="e.g., 2025"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-          />
-        </div>
-
-        {/* Career Goals */}
-        <div className="mb-4">
+        <div className="mt-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">Career Goals</label>
           <textarea
-            value={data.careerGoals || ''}
-            onChange={(e) => setData({...data, careerGoals: e.target.value})}
+            value={careerGoals}
+            onChange={(e) => setCareerGoals(e.target.value)}
             rows={3}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            placeholder="Describe your career aspirations..."
           />
         </div>
-      </div>
 
-      {/* Skills & Projects */}
-      <div className="bg-gray-50 p-6 rounded-lg">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Skills & Projects</h3>
-        
-        {/* Skills */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Skills</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {data.skills?.map((skill, index) => (
-              <span key={index} className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm flex items-center">
-                {skill}
-                <button
-                  type="button"
-                  onClick={() => removeFromArray(data.skills!, (arr) => setData({...data, skills: arr}), index)}
-                  className="ml-2 text-purple-600 hover:text-purple-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <div className="flex">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Learning Time</label>
             <input
               type="text"
-              placeholder="Add skill"
-              className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addToArray(data.skills || [], (arr) => setData({...data, skills: arr}), e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
+              value={preferredLearningTime}
+              onChange={(e) => setPreferredLearningTime(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="e.g., Evenings, Weekends"
             />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                addToArray(data.skills || [], (arr) => setData({...data, skills: arr}), input.value);
-                input.value = '';
-              }}
-              className="bg-orange-primary text-white px-4 rounded-r-lg hover:bg-orange-secondary"
-            >
-              Add
-            </button>
           </div>
-        </div>
-
-        {/* Projects */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Projects</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {data.projects?.map((project, index) => (
-              <span key={index} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm flex items-center">
-                {project}
-                <button
-                  type="button"
-                  onClick={() => removeFromArray(data.projects!, (arr) => setData({...data, projects: arr}), index)}
-                  className="ml-2 text-indigo-600 hover:text-indigo-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <div className="flex">
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Budget ($/hour)</label>
             <input
-              type="text"
-              placeholder="Add project"
-              className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addToArray(data.projects || [], (arr) => setData({...data, projects: arr}), e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
+              type="number"
+              value={budget}
+              onChange={(e) => setBudget(Number(e.target.value))}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              min="0"
             />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                addToArray(data.projects || [], (arr) => setData({...data, projects: arr}), input.value);
-                input.value = '';
-              }}
-              className="bg-orange-primary text-white px-4 rounded-r-lg hover:bg-orange-secondary"
-            >
-              Add
-            </button>
-          </div>
-        </div>
-
-        {/* Extracurriculars */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Extracurricular Activities</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {data.extracurriculars?.map((activity, index) => (
-              <span key={index} className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm flex items-center">
-                {activity}
-                <button
-                  type="button"
-                  onClick={() => removeFromArray(data.extracurriculars!, (arr) => setData({...data, extracurriculars: arr}), index)}
-                  className="ml-2 text-yellow-600 hover:text-yellow-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <div className="flex">
-            <input
-              type="text"
-              placeholder="Add extracurricular activity"
-              className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addToArray(data.extracurriculars || [], (arr) => setData({...data, extracurriculars: arr}), e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                addToArray(data.extracurriculars || [], (arr) => setData({...data, extracurriculars: arr}), input.value);
-                input.value = '';
-              }}
-              className="bg-orange-primary text-white px-4 rounded-r-lg hover:bg-orange-secondary"
-            >
-              Add
-            </button>
           </div>
         </div>
       </div>
 
-      {/* Learning Preferences */}
-      <div className="bg-gray-50 p-6 rounded-lg">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Learning Preferences</h3>
-        
-        {/* Preferred Learning Time */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Learning Time</label>
-          <select
-            value={data.preferredLearningTime || ''}
-            onChange={(e) => setData({...data, preferredLearningTime: e.target.value})}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-          >
-            <option value="">Select preferred time</option>
-            <option value="Morning">Morning</option>
-            <option value="Afternoon">Afternoon</option>
-            <option value="Evening">Evening</option>
-            <option value="Weekends">Weekends</option>
-            <option value="Flexible">Flexible</option>
-          </select>
-        </div>
+      {/* Interests */}
+      <ArrayInputSection
+        title="Interests"
+        icon={<BookOpen className="text-orange-500" size={24} />}
+        items={interests}
+        setItems={setInterests}
+        placeholder="Add interest"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
 
-        {/* Budget */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Budget (USD per hour)</label>
-          <input
-            type="number"
-            value={data.budget || ''}
-            onChange={(e) => setData({...data, budget: parseFloat(e.target.value) || 0})}
-            placeholder="e.g., 25"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-          />
-        </div>
+      {/* Goals */}
+      <ArrayInputSection
+        title="Goals"
+        icon={<Target className="text-orange-500" size={24} />}
+        items={goals}
+        setItems={setGoals}
+        placeholder="Add goal"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
 
-        {/* Location */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-          <input
-            type="text"
-            value={data.location || ''}
-            onChange={(e) => setData({...data, location: e.target.value})}
-            placeholder="e.g., New York, NY or Online"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-          />
-        </div>
+      {/* Preferred Subjects */}
+      <ArrayInputSection
+        title="Preferred Subjects"
+        icon={<Layout className="text-orange-500" size={24} />}
+        items={preferredSubjects}
+        setItems={setPreferredSubjects}
+        placeholder="Add preferred subject"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
 
-        {/* Languages */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Languages</label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {data.languages?.map((language, index) => (
-              <span key={index} className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm flex items-center">
-                {language}
-                <button
-                  type="button"
-                  onClick={() => removeFromArray(data.languages!, (arr) => setData({...data, languages: arr}), index)}
-                  className="ml-2 text-red-600 hover:text-red-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-          <div className="flex">
-            <input
-              type="text"
-              placeholder="Add language"
-              className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addToArray(data.languages || [], (arr) => setData({...data, languages: arr}), e.currentTarget.value);
-                  e.currentTarget.value = '';
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                addToArray(data.languages || [], (arr) => setData({...data, languages: arr}), input.value);
-                input.value = '';
-              }}
-              className="bg-orange-primary text-white px-4 rounded-r-lg hover:bg-orange-secondary"
-            >
-              Add
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Skills */}
+      <ArrayInputSection
+        title="Skills"
+        icon={<Star className="text-orange-500" size={24} />}
+        items={skills}
+        setItems={setSkills}
+        placeholder="Add skill"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
+
+      {/* Projects */}
+      <ArrayInputSection
+        title="Projects"
+        icon={<Briefcase className="text-orange-500" size={24} />}
+        items={projects}
+        setItems={setProjects}
+        placeholder="Add project"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
+
+      {/* Extracurriculars */}
+      <ArrayInputSection
+        title="Extracurricular Activities"
+        icon={<Users className="text-orange-500" size={24} />}
+        items={extracurriculars}
+        setItems={setExtracurriculars}
+        placeholder="Add activity"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
+
+      {/* Languages */}
+      <ArrayInputSection
+        title="Languages"
+        icon={<Languages className="text-orange-500" size={24} />}
+        items={languages}
+        setItems={setLanguages}
+        placeholder="Add language"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
 
       {/* Social Links */}
-      <div className="bg-gray-50 p-6 rounded-lg">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Social Links</h3>
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-orange-100">
+        <div className="flex items-center mb-6">
+          <Globe className="text-orange-500 mr-3" size={24} />
+          <h3 className="text-xl font-bold text-gray-800">Social Links</h3>
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">GitHub</label>
             <input
               type="url"
-              value={data.socialLinks?.github || ''}
-              onChange={(e) => setData({...data, socialLinks: {...(data.socialLinks || {}), github: e.target.value}})}
+              value={socialLinks.github || ''}
+              onChange={(e) => setSocialLinks({...socialLinks, github: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="https://github.com/yourusername"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
             />
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn</label>
             <input
               type="url"
-              value={data.socialLinks?.linkedin || ''}
-              onChange={(e) => setData({...data, socialLinks: {...(data.socialLinks || {}), linkedin: e.target.value}})}
+              value={socialLinks.linkedin || ''}
+              onChange={(e) => setSocialLinks({...socialLinks, linkedin: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="https://linkedin.com/in/yourprofile"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
             />
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Portfolio</label>
             <input
               type="url"
-              value={data.socialLinks?.portfolio || ''}
-              onChange={(e) => setData({...data, socialLinks: {...(data.socialLinks || {}), portfolio: e.target.value}})}
+              value={socialLinks.portfolio || ''}
+              onChange={(e) => setSocialLinks({...socialLinks, portfolio: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
               placeholder="https://yourportfolio.com"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
             />
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// Reusable Array Input Section Component
+const ArrayInputSection: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  items: string[];
+  setItems: (items: string[]) => void;
+  placeholder: string;
+  addToArray: (array: string[], setter: (arr: string[]) => void, value: string) => void;
+  removeFromArray: (array: string[], setter: (arr: string[]) => void, index: number) => void;
+}> = ({ title, icon, items, setItems, placeholder, addToArray, removeFromArray }) => {
+  const [inputValue, setInputValue] = useState('');
+
+  const handleAdd = () => {
+    if (inputValue.trim()) {
+      addToArray(items, setItems, inputValue);
+      setInputValue('');
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAdd();
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-lg p-6 border border-orange-100">
+      <div className="flex items-center mb-6">
+        {icon}
+        <h3 className="text-xl font-bold text-gray-800 ml-3">{title}</h3>
+      </div>
+      
+      <div className="flex flex-wrap gap-2 mb-4">
+        {items.map((item, index) => (
+          <span key={index} className="bg-orange-100 text-orange-800 px-3 py-1.5 rounded-full text-sm flex items-center">
+            {item}
+            <button
+              type="button"
+              onClick={() => removeFromArray(items, setItems, index)}
+              className="ml-2 text-orange-600 hover:text-orange-800"
+            >
+              <X size={14} />
+            </button>
+          </span>
+        ))}
+      </div>
+      
+      <div className="flex">
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder={placeholder}
+          className="flex-1 p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+        />
+        <button
+          type="button"
+          onClick={handleAdd}
+          className="bg-orange-500 text-white px-4 rounded-r-lg hover:bg-orange-600 transition duration-300"
+        >
+          <Plus size={18} />
+        </button>
       </div>
     </div>
   );
