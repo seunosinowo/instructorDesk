@@ -9,25 +9,25 @@ const HeroSection: React.FC = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
-      className="relative bg-gradient-to-br from-amber-100 to-orange-50 min-h-screen flex items-center overflow-hidden"
+      className="relative bg-gradient-to-br from-amber-100 to-orange-50 min-h-screen flex items-center overflow-hidden max-w-full"
     >
       {/* Decorative elements */}
       <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-amber-200/20"></div>
       <div className="absolute bottom-20 right-20 w-48 h-48 rounded-full bg-orange-200/20"></div>
       <div className="absolute top-1/3 right-1/4 w-16 h-16 rounded-full bg-amber-300/30"></div>
       
-      <div className="container mx-auto px-4 py-20 z-10">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
+      <div className="container mx-auto px-6 lg:px-8 py-20 z-10 max-w-7xl">
+        <div className="flex flex-col lg:flex-row items-center justify-center lg:justify-between gap-12 w-full">
           <motion.div 
             initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.7 }}
-            className="lg:w-1/2 text-center lg:text-left"
+            className="lg:w-1/2 w-full text-center lg:text-left flex flex-col items-center lg:items-start"
           >
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-6 leading-tight">
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-6 leading-tight text-center lg:text-left max-w-full">
               Connect. Learn. Grow with <span className="text-amber-500">Teacherrs</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl">
+            <p className="text-xl text-gray-600 mb-8 max-w-2xl text-center lg:text-left mx-auto lg:mx-0">
               The professional network dedicated entirely to education. Find teachers, connect with students, and build your academic community.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -50,7 +50,7 @@ const HeroSection: React.FC = () => {
             initial={{ x: 50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.7 }}
-            className="lg:w-1/2 flex justify-center"
+            className="lg:w-1/2 w-full flex justify-center items-center"
           >
             <div className="relative">
               <div className="bg-white rounded-2xl p-6 border border-amber-200 shadow-xl w-full max-w-md">

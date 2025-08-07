@@ -22,12 +22,13 @@ import { motion } from 'framer-motion';
 
 const App: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-light text-gray-dark font-sans">
+    <div className="min-h-screen bg-gray-light text-gray-dark font-sans overflow-x-hidden max-w-full">
       <Navbar />
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8, ease: 'easeOut' }}
+        className="overflow-x-hidden max-w-full"
       >
         <Routes>
           <Route path="/" element={<LandingPage />} />
