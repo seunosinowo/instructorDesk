@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import DeleteAccountModal from '../components/DeleteAccountModal';
+import PasswordInput from '../components/PasswordInput';
 
 const ProfileSettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('account');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   // Account settings
   const [email, setEmail] = useState('');
@@ -15,45 +18,37 @@ const ProfileSettingsPage: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
-  // Privacy settings
-  const [profileVisibility, setProfileVisibility] = useState('public');
-  const [showEmail, setShowEmail] = useState(false);
-  const [allowMessages, setAllowMessages] = useState(true);
-  const [allowConnections, setAllowConnections] = useState(true);
-  
-  // Notification settings
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [messageNotifications, setMessageNotifications] = useState(true);
-  const [connectionNotifications, setConnectionNotifications] = useState(true);
-  const [postNotifications, setPostNotifications] = useState(false);
-  
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSettings = async () => {
+      if (!token) {
+        console.log('No token found, redirecting to login');
+        navigate('/login');
+        return;
+      }
+
       try {
+        console.log('Fetching settings with token:', token?.substring(0, 20) + '...');
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/profile/settings`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
+        console.log('Settings response:', response.data);
         const settings = response.data;
         setEmail(settings.email || '');
-        setProfileVisibility(settings.profileVisibility || 'public');
-        setShowEmail(settings.showEmail || false);
-        setAllowMessages(settings.allowMessages !== false);
-        setAllowConnections(settings.allowConnections !== false);
-        setEmailNotifications(settings.emailNotifications !== false);
-        setMessageNotifications(settings.messageNotifications !== false);
-        setConnectionNotifications(settings.connectionNotifications !== false);
-        setPostNotifications(settings.postNotifications || false);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch settings:', err);
+        if (err.response?.status === 401) {
+          localStorage.clear();
+          navigate('/login');
+        }
       }
     };
 
     fetchSettings();
-  }, [token]);
+  }, [token, navigate]);
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,11 +57,17 @@ const ProfileSettingsPage: React.FC = () => {
       return;
     }
 
+    if (newPassword.length < 6) {
+      setError('New password must be at least 6 characters long');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccess('');
 
     try {
+      console.log('Changing password...');
       await axios.put(`${import.meta.env.VITE_API_URL}/auth/change-password`, {
         currentPassword,
         newPassword
@@ -78,78 +79,39 @@ const ProfileSettingsPage: React.FC = () => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      console.log('Password changed successfully');
     } catch (err: any) {
+      console.error('Password change error:', err);
       setError(err.response?.data?.error || 'Failed to change password');
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePrivacyUpdate = async () => {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/profile/privacy`, {
-        profileVisibility,
-        showEmail,
-        allowMessages,
-        allowConnections
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      setSuccess('Privacy settings updated successfully');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to update privacy settings');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleNotificationUpdate = async () => {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/profile/notifications`, {
-        emailNotifications,
-        messageNotifications,
-        connectionNotifications,
-        postNotifications
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      setSuccess('Notification settings updated successfully');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to update notification settings');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDeleteAccount = async () => {
-    if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      try {
-        await axios.delete(`${import.meta.env.VITE_API_URL}/profile/delete`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        localStorage.clear();
-        navigate('/');
-      } catch (err: any) {
-        setError(err.response?.data?.error || 'Failed to delete account');
-      }
+    setLoading(true);
+    setError('');
+    
+    try {
+      console.log('Deleting account...');
+      await axios.delete(`${import.meta.env.VITE_API_URL}/profile/delete`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      console.log('Account deleted successfully');
+      localStorage.clear();
+      navigate('/');
+    } catch (err: any) {
+      console.error('Delete account error:', err);
+      setError(err.response?.data?.error || 'Failed to delete account');
+      setShowDeleteModal(false);
+    } finally {
+      setLoading(false);
     }
   };
 
   const tabs = [
     { id: 'account', name: 'Account', icon: '👤' },
-    { id: 'privacy', name: 'Privacy', icon: '🔒' },
-    { id: 'notifications', name: 'Notifications', icon: '🔔' },
     { id: 'danger', name: 'Danger Zone', icon: '⚠️' }
   ];
 
@@ -158,17 +120,37 @@ const ProfileSettingsPage: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="max-w-4xl mx-auto mt-10 p-8"
+      className="max-w-4xl mx-auto mt-4 md:mt-10 p-4 md:p-8"
     >
       <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
-        <div className="bg-gradient-to-r from-orange-primary to-orange-secondary p-6">
-          <h1 className="text-3xl font-bold text-white">Profile Settings</h1>
-          <p className="text-orange-100 mt-2">Manage your account preferences and privacy settings</p>
+        <div className="bg-gradient-to-r from-orange-primary to-orange-secondary p-4 md:p-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-white">Profile Settings</h1>
+          <p className="text-orange-100 mt-2 text-sm md:text-base">Manage your account preferences</p>
         </div>
 
-        <div className="flex">
-          {/* Sidebar */}
-          <div className="w-1/4 bg-gray-50 p-6">
+        {/* Mobile Tab Navigation */}
+        <div className="md:hidden bg-gray-50 px-4 py-3">
+          <div className="flex space-x-1 overflow-x-auto">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center px-4 py-2 rounded-lg whitespace-nowrap transition duration-200 ${
+                  activeTab === tab.id
+                    ? 'bg-orange-primary text-white'
+                    : 'text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <span className="mr-2 text-sm">{tab.icon}</span>
+                <span className="text-sm">{tab.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row">
+          {/* Desktop Sidebar */}
+          <div className="hidden md:block w-1/4 bg-gray-50 p-6">
             <nav className="space-y-2">
               {tabs.map((tab) => (
                 <button
@@ -188,23 +170,23 @@ const ProfileSettingsPage: React.FC = () => {
           </div>
 
           {/* Content */}
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-4 md:p-6">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 md:mb-6 text-sm md:text-base">
                 {error}
               </div>
             )}
 
             {success && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4 md:mb-6 text-sm md:text-base">
                 {success}
               </div>
             )}
 
             {/* Account Tab */}
             {activeTab === 'account' && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-semibold text-gray-800">Account Settings</h2>
+              <div className="space-y-4 md:space-y-6">
+                <h2 className="text-xl md:text-2xl font-semibold text-gray-800">Account Settings</h2>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
@@ -212,9 +194,9 @@ const ProfileSettingsPage: React.FC = () => {
                     type="email"
                     value={email}
                     disabled
-                    className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500"
+                    className="w-full p-3 text-sm md:text-base border border-gray-300 rounded-lg bg-gray-100 text-gray-500"
                   />
-                  <p className="text-sm text-gray-500 mt-1">Email cannot be changed. Contact support if needed.</p>
+                  <p className="text-xs md:text-sm text-gray-500 mt-1">Email cannot be changed. Contact support if needed.</p>
                 </div>
 
                 <form onSubmit={handlePasswordChange} className="space-y-4">
@@ -226,37 +208,29 @@ const ProfileSettingsPage: React.FC = () => {
                       type="password"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
+                      className="w-full p-3 text-sm md:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
                       required
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-                      required
-                    />
-                  </div>
+                  <PasswordInput
+                    label="New Password"
+                    value={newPassword}
+                    onChange={setNewPassword}
+                    required
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Confirm New Password</label>
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-                      required
-                    />
-                  </div>
+                  <PasswordInput
+                    label="Confirm New Password"
+                    value={confirmPassword}
+                    onChange={setConfirmPassword}
+                    required
+                  />
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="bg-orange-primary text-white px-6 py-3 rounded-lg hover:bg-orange-secondary transition duration-300 font-semibold disabled:opacity-50"
+                    className="w-full md:w-auto bg-orange-primary text-white px-6 py-3 rounded-lg hover:bg-orange-secondary transition duration-300 font-semibold disabled:opacity-50 text-sm md:text-base"
                   >
                     {loading ? 'Changing...' : 'Change Password'}
                   </button>
@@ -264,178 +238,19 @@ const ProfileSettingsPage: React.FC = () => {
               </div>
             )}
 
-            {/* Privacy Tab */}
-            {activeTab === 'privacy' && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-semibold text-gray-800">Privacy Settings</h2>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Profile Visibility</label>
-                  <select
-                    value={profileVisibility}
-                    onChange={(e) => setProfileVisibility(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-primary"
-                  >
-                    <option value="public">Public - Anyone can view your profile</option>
-                    <option value="connections">Connections Only - Only your connections can view</option>
-                    <option value="private">Private - Only you can view your profile</option>
-                  </select>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-800">Show Email Address</h3>
-                      <p className="text-sm text-gray-600">Allow others to see your email address</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={showEmail}
-                        onChange={(e) => setShowEmail(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-primary"></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-800">Allow Messages</h3>
-                      <p className="text-sm text-gray-600">Allow others to send you messages</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={allowMessages}
-                        onChange={(e) => setAllowMessages(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-primary"></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-800">Allow Connection Requests</h3>
-                      <p className="text-sm text-gray-600">Allow others to send you connection requests</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={allowConnections}
-                        onChange={(e) => setAllowConnections(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-primary"></div>
-                    </label>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handlePrivacyUpdate}
-                  disabled={loading}
-                  className="bg-orange-primary text-white px-6 py-3 rounded-lg hover:bg-orange-secondary transition duration-300 font-semibold disabled:opacity-50"
-                >
-                  {loading ? 'Updating...' : 'Update Privacy Settings'}
-                </button>
-              </div>
-            )}
-
-            {/* Notifications Tab */}
-            {activeTab === 'notifications' && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-semibold text-gray-800">Notification Settings</h2>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-800">Email Notifications</h3>
-                      <p className="text-sm text-gray-600">Receive notifications via email</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={emailNotifications}
-                        onChange={(e) => setEmailNotifications(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-primary"></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-800">Message Notifications</h3>
-                      <p className="text-sm text-gray-600">Get notified when you receive messages</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={messageNotifications}
-                        onChange={(e) => setMessageNotifications(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-primary"></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-800">Connection Notifications</h3>
-                      <p className="text-sm text-gray-600">Get notified about connection requests</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={connectionNotifications}
-                        onChange={(e) => setConnectionNotifications(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-primary"></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-800">Post Notifications</h3>
-                      <p className="text-sm text-gray-600">Get notified about new posts from connections</p>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={postNotifications}
-                        onChange={(e) => setPostNotifications(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-primary"></div>
-                    </label>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleNotificationUpdate}
-                  disabled={loading}
-                  className="bg-orange-primary text-white px-6 py-3 rounded-lg hover:bg-orange-secondary transition duration-300 font-semibold disabled:opacity-50"
-                >
-                  {loading ? 'Updating...' : 'Update Notification Settings'}
-                </button>
-              </div>
-            )}
-
             {/* Danger Zone Tab */}
             {activeTab === 'danger' && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-semibold text-gray-800">Danger Zone</h2>
+              <div className="space-y-4 md:space-y-6">
+                <h2 className="text-xl md:text-2xl font-semibold text-gray-800">Danger Zone</h2>
                 
-                <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 md:p-6">
                   <h3 className="text-lg font-semibold text-red-800 mb-2">Delete Account</h3>
-                  <p className="text-red-700 mb-4">
+                  <p className="text-red-700 mb-4 text-sm md:text-base">
                     Once you delete your account, there is no going back. Please be certain.
                   </p>
                   <button
-                    onClick={handleDeleteAccount}
-                    className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition duration-300 font-semibold"
+                    onClick={() => setShowDeleteModal(true)}
+                    className="w-full md:w-auto bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition duration-300 font-semibold text-sm md:text-base"
                   >
                     Delete My Account
                   </button>
@@ -445,6 +260,14 @@ const ProfileSettingsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteAccount}
+        loading={loading}
+      />
     </motion.div>
   );
 };
