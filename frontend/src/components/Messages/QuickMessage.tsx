@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { User as UserIcon, Send, ChevronDown, Search } from 'lucide-react';
 import { messageService } from '../../services/messageService';
 import type { User } from '../../services/messageService';
+import { cache } from '../../utils/cache';
 
 interface QuickMessageProps {
   onMessageSent?: () => void;
@@ -20,7 +21,13 @@ const QuickMessage: React.FC<QuickMessageProps> = ({ onMessageSent }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    fetchUsers();
+    // Check cache first
+    const cachedUsers = cache.get<User[]>('message-users');
+    if (cachedUsers) {
+      setUsers(cachedUsers);
+    } else if (users.length === 0) {
+      fetchUsers();
+    }
   }, []);
 
   const fetchUsers = async () => {
@@ -28,6 +35,8 @@ const QuickMessage: React.FC<QuickMessageProps> = ({ onMessageSent }) => {
       const users = await messageService.getUsers();
       console.log('Fetched users:', users);
       setUsers(users);
+      // Cache users for 5 minutes
+      cache.set('message-users', users, 5);
     } catch (error) {
       console.error('Failed to fetch users:', error);
       setError('Failed to load users');

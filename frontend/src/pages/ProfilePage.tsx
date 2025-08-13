@@ -58,32 +58,37 @@ const ProfilePage: React.FC = () => {
   }, [token, navigate]);
 
   // Also refresh when the component mounts (useful when navigating back from edit)
+  // Debounce function to limit refreshProfile calls
+  function debounce(func: (...args: any[]) => void, wait: number) {
+    let timeout: ReturnType<typeof setTimeout>;
+    return (...args: any[]) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  }
+
   useEffect(() => {
-    const handleFocus = () => {
-      console.log('Window focused, refreshing profile...');
+    const debouncedRefresh = debounce(() => {
+      console.log('Debounced profile refresh...');
       refreshProfile();
+    }, 500);
+
+    const handleFocus = () => {
+      debouncedRefresh();
     };
 
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log('Page became visible, refreshing profile...');
-        refreshProfile();
+        debouncedRefresh();
       }
     };
 
     window.addEventListener('focus', handleFocus);
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Also refresh when component mounts
-    const timer = setTimeout(() => {
-      console.log('Component mounted, doing additional refresh...');
-      refreshProfile();
-    }, 100);
 
     return () => {
       window.removeEventListener('focus', handleFocus);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearTimeout(timer);
     };
   }, []);
 

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import PostCard from '../components/Home/PostCard';
 import CreatePost from '../components/Feed/CreatePost';
@@ -9,59 +9,125 @@ import RightSidebar from '../components/Home/RightSidebar';
 import { motion } from 'framer-motion';
 import type { Post } from '../types';
 
+// Define UserProfile interface for type safety
+interface UserProfile {
+  id: string;
+  role: 'teacher' | 'student';
+  profile: {
+    subjects?: string[];
+    interests?: string[];
+    [key: string]: any; // For additional fields
+  };
+}
+
 const HomePage: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [profileCompleted, setProfileCompleted] = useState<boolean | null>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState<'feed' | 'discover'>('feed');
+  const [error, setError] = useState<string | null>(null); // Added for error handling
   const token = localStorage.getItem('token');
+  const userId = localStorage.getItem('userId');
   const navigate = useNavigate();
+  const location = useLocation();
 
-  useEffect(() => {
-    const checkProfileCompletion = async () => {
-      try {
-        const userId = localStorage.getItem('userId');
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/profile/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        
-        const hasProfile = response.data.profile && 
-          ((response.data.role === 'teacher' && response.data.profile.subjects?.length > 0) ||
-           (response.data.role === 'student' && response.data.profile.interests?.length > 0));
-        
-        setProfileCompleted(hasProfile);
-        setUserProfile(response.data);
-        
-        if (!hasProfile) {
-          // Redirect to profile setup if profile is not completed
-          navigate('/profile/setup');
-          return;
-        }
-      } catch (error) {
-        console.error('Failed to check profile completion:', error);
-        // If profile doesn't exist, redirect to profile setup
+  // Memoize checkProfileCompletion to prevent unnecessary re-creations
+  const checkProfileCompletion = useCallback(async () => {
+    if (!token || !userId) {
+      setError('Authentication required. Please log in.');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/profile/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Use backend's profileCompleted property if available
+  const { profileCompleted } = response.data;
+      setProfileCompleted(profileCompleted);
+      setUserProfile(response.data);
+
+      // If on /profile/setup and profile is completed, redirect to home
+      if (location.pathname === '/profile/setup' && profileCompleted) {
+        navigate('/');
+        return;
+      }
+
+      // If not completed, redirect to setup
+      if (!profileCompleted && location.pathname !== '/profile/setup') {
         navigate('/profile/setup');
         return;
       }
-    };
-
-    const fetchPosts = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/posts`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setPosts(response.data.posts || response.data);
-      } catch (err) {
-        console.error('Failed to fetch posts');
+    } catch (error) {
+      console.error('Failed to check profile completion:', error);
+      setError('Failed to load profile. Please try again.');
+      setProfileCompleted(false);
+      if (location.pathname !== '/profile/setup') {
+        navigate('/profile/setup');
       }
-    };
+    }
+  }, [token, userId, navigate, location.pathname]);
 
-    checkProfileCompletion().then(() => {
-      if (profileCompleted !== false) {
-        fetchPosts();
-      }
-    });
-  }, [token, navigate, profileCompleted]);
+  // Memoize fetchPosts to prevent unnecessary re-creations
+  const fetchPosts = useCallback(async () => {
+    if (!token) {
+      setError('Authentication required. Please log in.');
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/posts`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const postsData = Array.isArray(response.data.posts) ? response.data.posts : response.data;
+      setPosts(postsData);
+    } catch (err) {
+      console.error('Failed to fetch posts:', err);
+      setError('Failed to load posts. Please try again.');
+    }
+  }, [token]);
+
+  // Check profile completion on mount
+  useEffect(() => {
+    if (location.pathname === '/profile/setup') return;
+    checkProfileCompletion();
+  }, [checkProfileCompletion, location.pathname]);
+
+  // Fetch posts when profile is completed
+  useEffect(() => {
+    if (profileCompleted === true) {
+      fetchPosts();
+    }
+  }, [profileCompleted, fetchPosts]);
+
+  // Handle post creation
+  const handlePostCreated = useCallback((newPost: Post) => {
+    setPosts((prevPosts) => [newPost, ...prevPosts]);
+  }, []);
+
+  // Handle post update
+  const handlePostUpdated = useCallback((updatedPost: Post) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((post) => (post.id === updatedPost.id ? updatedPost : post))
+    );
+  }, []);
+
+  // Handle post deletion
+  const handlePostDeleted = useCallback((postId: string) => {
+    setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+  }, []);
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-red-500 text-lg">{error}</div>
+      </div>
+    );
+  }
 
   // Show loading while checking profile completion
   if (profileCompleted === null) {
@@ -71,18 +137,6 @@ const HomePage: React.FC = () => {
       </div>
     );
   }
-
-  const handlePostCreated = (newPost: Post) => {
-    setPosts([newPost, ...posts]);
-  };
-
-  const handlePostUpdated = (updatedPost: Post) => {
-    setPosts(posts.map(post => post.id === updatedPost.id ? updatedPost : post));
-  };
-
-  const handlePostDeleted = (postId: string) => {
-    setPosts(posts.filter(post => post.id !== postId));
-  };
 
   return (
     <div className="container mx-auto p-4 lg:p-6 max-w-7xl">

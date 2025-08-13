@@ -25,7 +25,12 @@ const ProfileBrowser: React.FC = () => {
   const currentUserId = localStorage.getItem('userId');
 
   useEffect(() => {
-    fetchUsers();
+    // Debounce search term changes to prevent excessive API calls
+    const timeoutId = setTimeout(() => {
+      fetchUsers();
+    }, searchTerm ? 500 : 0); // 500ms delay for search, immediate for other changes
+
+    return () => clearTimeout(timeoutId);
   }, [currentPage, roleFilter, searchTerm]);
 
   const fetchUsers = async () => {
