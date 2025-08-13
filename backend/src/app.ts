@@ -20,7 +20,7 @@ const app = express();
 app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'] }));
 app.use(helmet());
 app.use(morgan('dev'));
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 1000 }));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);

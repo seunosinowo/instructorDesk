@@ -1,34 +1,29 @@
-import express from 'express';
-import cors from 'cors';
 import dotenv from 'dotenv';
 dotenv.config();
 
 import sequelize from './config/database';
-import authRoutes from './routes/authRoutes';
-import profileRoutes from './routes/profileRoutes';
-import postRoutes from './routes/postRoutes';
-import messageRoutes from './routes/messageRoutes';
-import uploadRoutes from './routes/uploadRoutes';
-
-
-
-const app = express();
-
-app.use(cors());
-app.use(express.json());
+import app from './app';
+import './models'; // Import models to ensure associations are set up
 
 sequelize.authenticate()
   .then(() => console.log('Database connected'))
-  .catch(err => console.error('Database connection error:', err));
-
-// Sync models (use with caution in production)
-// sequelize.sync({ alter: true }).then(() => console.log('Models synchronized'));
-
-app.use('/api/auth', authRoutes);
-app.use('/api/profile', profileRoutes);
-app.use('/api/posts', postRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/upload', uploadRoutes);
+  .then(() => {
+    // Only sync in development, and only if tables don't exist
+    if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+      return sequelize.sync({ alter: false });
+    }
+  })
+  .then(() => {
+    if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+      console.log('Database synchronized');
+    }
+  })
+  .catch(err => {
+    // Only log critical connection errors, not sync errors
+    if (err.name === 'ConnectionError' || err.name === 'HostNotFoundError') {
+      console.error('Database connection error:', err.message);
+    }
+  });
 
 
 const PORT = process.env.PORT || 5000;

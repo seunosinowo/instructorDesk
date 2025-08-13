@@ -108,6 +108,7 @@ router.post('/:id/comments', authMiddleware, async (req: express.Request & { use
     const commentWithUser = await Comment.findByPk(comment.id, {
       include: [{ 
         model: User, 
+        as: 'user',
         attributes: ['id', 'name', 'profilePicture'] 
       }]
     });
@@ -127,6 +128,7 @@ router.get('/:id/comments', authMiddleware, async (req, res) => {
       where: { postId },
       include: [{ 
         model: User, 
+        as: 'user',
         attributes: ['id', 'name', 'profilePicture'] 
       }],
       order: [['createdAt', 'ASC']]

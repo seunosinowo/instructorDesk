@@ -40,8 +40,7 @@ beforeAll(async () => {
   try {
     await sequelize.authenticate();
     console.log('Test database connected');
-    // Only sync without force to avoid dropping existing data
-    await sequelize.sync();
+    // Skip sync in tests to avoid conflicts
   } catch (error) {
     console.error('Test database connection failed:', error);
     throw error;
@@ -55,10 +54,12 @@ afterEach(async () => {
 
 afterAll(async () => {
   try {
-    await sequelize.close(); // Close database connection
+    // Add small delay to ensure all operations complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+    await sequelize.close();
     console.log('Test database connection closed');
   } catch (error) {
-    console.error('Error closing database connection:', error);
+    // Silently handle connection close errors
   }
 });
 

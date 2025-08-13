@@ -17,6 +17,10 @@ class Comment extends Model<CommentAttributes, CommentCreationAttributes> implem
   public postId!: string;
   public content!: string;
   public createdAt!: Date;
+
+  // Association properties
+  public user?: any;
+  public post?: any;
 }
 
 Comment.init({
