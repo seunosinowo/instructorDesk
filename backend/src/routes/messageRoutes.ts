@@ -11,6 +11,22 @@ interface AuthenticatedRequest extends express.Request {
 
 const router = express.Router();
 
+// Get unread messages count
+router.get('/unread-count', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const unreadCount = await Message.count({
+      where: {
+        receiverId: String(req.user!.id),
+        isRead: false
+      }
+    });
+    res.json({ count: unreadCount });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get all users (both teachers and students) for messaging
 router.get('/users', authMiddleware, requireProfileCompletion, async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -53,12 +69,16 @@ router.get('/teachers', authMiddleware, async (req: AuthenticatedRequest, res: R
 // Send a message to any user
 router.post('/', authMiddleware, requireProfileCompletion, async (req: AuthenticatedRequest, res: Response) => {
   const { receiverId, content } = req.body;
+  console.log('Sending message:', { senderId: req.user!.id, receiverId, content });
+  
   try {
     const message = await Message.create({ 
       senderId: String(req.user!.id), 
       receiverId: String(receiverId), 
       content 
     });
+    
+    console.log('Message created:', message.id);
     
     // Fetch the created message with sender and receiver info
     const messageWithUsers = await Message.findByPk(message.id, {
@@ -68,10 +88,11 @@ router.post('/', authMiddleware, requireProfileCompletion, async (req: Authentic
       ]
     });
     
+    console.log('Message with users fetched successfully');
     res.status(201).json(messageWithUsers);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error sending message:', error);
+    res.status(500).json({ message: 'Server error', error: (error as Error).message });
   }
 });
 
@@ -134,6 +155,19 @@ router.get('/conversation/:userId', authMiddleware, async (req: AuthenticatedReq
       ],
       order: [['createdAt', 'ASC']]
     });
+
+    // Mark messages as read when viewing conversation
+    await Message.update(
+      { isRead: true },
+      {
+        where: {
+          senderId: String(req.params.userId),
+          receiverId: String(req.user!.id),
+          isRead: false
+        }
+      }
+    );
+
     res.json(messages);
   } catch (error) {
     console.error(error);
