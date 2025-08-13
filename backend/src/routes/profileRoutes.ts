@@ -124,7 +124,7 @@ router.put('/', authMiddleware, async (req: express.Request & { user?: { id: str
     // Update user fields if provided
     const userUpdateData: any = {};
     if (req.body.name) userUpdateData.name = req.body.name;
-    if (req.body.bio) userUpdateData.bio = req.body.bio;
+    if (req.body.bio !== undefined) userUpdateData.bio = req.body.bio; // Allow empty string to clear bio
     if (req.body.email) userUpdateData.email = req.body.email;
     
     if (Object.keys(userUpdateData).length > 0) {
@@ -346,6 +346,45 @@ router.get('/stats', authMiddleware, async (req: express.Request & { user?: { id
     res.json(stats);
   } catch (error) {
     console.error('Get profile stats error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get profile settings (for settings page)
+router.get('/settings', authMiddleware, async (req: express.Request & { user?: { id: string; role: string } }, res) => {
+  try {
+    const user = await User.findByPk(req.user!.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.json({
+      email: user.email,
+      name: user.name
+    });
+  } catch (error) {
+    console.error('Get settings error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete account
+router.delete('/delete', authMiddleware, async (req: express.Request & { user?: { id: string; role: string } }, res) => {
+  try {
+    const user = await User.findByPk(req.user!.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Delete profile data first
+    if (user.role === 'teacher') {
+      await Teacher.destroy({ where: { userId: user.id } });
+    } else if (user.role === 'student') {
+      await Student.destroy({ where: { userId: user.id } });
+    }
+
+    // Delete user account
+    await User.destroy({ where: { id: user.id } });
+
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Delete account error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

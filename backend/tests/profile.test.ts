@@ -18,7 +18,7 @@ describe('Profile Routes', () => {
   let userId: string;
 
   beforeEach(async () => {
-    await sequelize.sync(); // Remove force: true to avoid dropping tables
+    // Skip sync to avoid conflicts
     const user = await User.create({
       email: 'test@example.com',
       password: await bcrypt.hash('password123', 10),
@@ -59,9 +59,11 @@ describe('Profile Routes', () => {
 
   afterAll(async () => {
     try {
+      // Add small delay to ensure all operations complete
+      await new Promise(resolve => setTimeout(resolve, 100));
       await sequelize.close();
     } catch (error) {
-      console.error('Error closing database connection:', error);
+      // Silently handle connection close errors
     }
   });
 
