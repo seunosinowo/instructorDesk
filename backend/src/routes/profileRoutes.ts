@@ -1,7 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
-import { User } from '../models';
+import { User, Message } from '../models';
 import { Teacher, Student } from '../models';
 import cloudinary from '../config/cloudinary';
 import { requireProfileCompletion } from '../middleware/profileCompletionMiddleware';
@@ -378,6 +378,10 @@ router.delete('/delete', authMiddleware, async (req: express.Request & { user?: 
     } else if (user.role === 'student') {
       await Student.destroy({ where: { userId: user.id } });
     }
+
+    // Delete all messages where user is sender or receiver
+    await Message.destroy({ where: { senderId: user.id } });
+    await Message.destroy({ where: { receiverId: user.id } });
 
     // Delete user account
     await User.destroy({ where: { id: user.id } });
