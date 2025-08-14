@@ -76,14 +76,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
   };
 
   const handleEdit = async () => {
-    console.log('Edit post attempt:', post.id, editContent);
+  console.log('[DEBUG] Edit post attempt:', post.id, editContent);
     try {
       const response = await axios.put(`${import.meta.env.VITE_API_URL}/posts/${post.id}`,
         { content: editContent },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log('Edit post response:', response.data);
+  console.log('[DEBUG] Edit post response:', response.data);
       if (onPostUpdated && response.data && response.data.id) {
+        console.log('[DEBUG] Calling onPostUpdated with:', response.data);
         onPostUpdated(response.data);
       } else {
         alert('Edit succeeded but no updated post returned. Please refresh.');
@@ -97,20 +98,17 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
     }
   };
 
-  // Update handleDelete function
-  const handleDelete = async () => {
-    setShowPostDeleteModal(true);
-  };
 
   // Update confirmDelete function
   const confirmPostDelete = async () => {
-    console.log('Delete post confirmed:', post.id);
+  console.log('[DEBUG] Delete post confirmed:', post.id);
     try {
       const response = await axios.delete(`${import.meta.env.VITE_API_URL}/posts/${post.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log('Delete post response:', response.data);
+  console.log('[DEBUG] Delete post response:', response.data);
       if (onPostDeleted) {
+        console.log('[DEBUG] Calling onPostDeleted with:', post.id);
         onPostDeleted(post.id);
       }
       setShowPostDeleteModal(false);
@@ -143,18 +141,17 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
     // eslint-disable-next-line
   }, [showComments]);
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside (fixed with ref)
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const handleClickOutside = () => {
-      if (showDropdown) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
     };
-
     if (showDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -302,13 +299,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
       className="bg-white rounded-xl shadow-lg mb-6 border border-gray-100 overflow-hidden"
     >
       {/* Post Header */}
-      <div className="p-6 pb-4">
+  <div className="p-4 pb-3 sm:p-6 sm:pb-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
             {/* Profile Picture */}
             <button
               onClick={() => navigate(`/profile/${post.user.id}`)}
-              className="w-12 h-12 rounded-full overflow-hidden bg-orange-primary flex-shrink-0 hover:ring-2 hover:ring-orange-primary hover:ring-offset-2 transition-all"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-orange-primary flex-shrink-0 hover:ring-2 hover:ring-orange-primary hover:ring-offset-2 transition-all"
             >
               {post.user.profilePicture ? (
                 <img 
@@ -323,14 +320,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
               )}
             </button>
 
-            <div>
+            <div className="space-y-0.5 sm:space-y-1">
               <button
                 onClick={() => navigate(`/profile/${post.user.id}`)}
                 className="font-semibold text-gray-800 hover:text-orange-primary transition-colors"
               >
                 {post.user.name}
               </button>
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
+              <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-500">
                 <span className="capitalize">{post.user.role}</span>
                 <span>•</span>
                 <span>{formatTimeAgo(post.createdAt)}</span>
@@ -338,9 +335,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2">
             {/* Post Type Badge */}
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${postType.color}`}>
+            <span className={`px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs font-medium ${postType.color}`}>
               {postType.icon} {post.type?.charAt(0).toUpperCase() + post.type?.slice(1) || 'General'}
             </span>
             
@@ -359,12 +356,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
                 
                 {showDropdown && (
                   <div
+                    ref={dropdownRef}
                     className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 border border-gray-200 overflow-hidden"
-                    onMouseDown={e => e.preventDefault()}
                   >
                     <button
                       onClick={() => {
-                        console.log('Edit button clicked for post:', post.id);
                         setIsEditing(true);
                         setShowDropdown(false);
                       }}
@@ -374,7 +370,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
                     </button>
                     <button
                       onClick={() => {
-                        handleDelete();
+                        setShowPostDeleteModal(true);
                         setShowDropdown(false);
                       }}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors"
@@ -413,7 +409,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
       </div>
 
       {/* Post Content */}
-      <div className="px-6 pb-4">
+  <div className="px-4 pb-3 sm:px-6 sm:pb-4">
         {isEditing ? (
           <div className="space-y-3">
             <textarea

@@ -6,7 +6,6 @@ import {
   Home, 
   MessageSquare, 
   User, 
-  LayoutDashboard,
   Settings,
   Edit3,
   LogOut,
@@ -109,7 +108,6 @@ const Navbar: React.FC = () => {
             ) : (
               <>
                 <div className="flex items-center space-x-5">
-                  <NavLink to="/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" />
                   <NavLink to="/home" icon={<Home size={20} />} label="Home" />
                   <NavLink to="/messages" icon={<MessageSquare size={20} />} label="Messages" />
                   <NavLink to="/profile" icon={<User size={20} />} label="Profile" />
@@ -264,12 +262,7 @@ const Navbar: React.FC = () => {
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4 py-6">
-                    <MobileNavLink 
-                      to="/dashboard" 
-                      icon={<LayoutDashboard size={24} />}
-                      label="Dashboard"
-                      onClick={() => setMobileMenuOpen(false)}
-                    />
+                    {/* Dashboard removed for authenticated users */}
                     <MobileNavLink 
                       to="/home" 
                       icon={<Home size={24} />}
