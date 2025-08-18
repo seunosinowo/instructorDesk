@@ -23,7 +23,7 @@ export const sendConfirmationEmail = async (name: string, email: string, confirm
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'Welcome to EduConnect - Confirm Your Email',
+      subject: 'Welcome to Teacherrs - Confirm Your Email',
       html: personalizedEmail
     });
 
@@ -46,7 +46,7 @@ export const sendPasswordResetEmail = async (email: string, resetToken: string) 
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'EduConnect - Password Reset Request',
+      subject: 'Teacherrs - Password Reset Request',
       html: personalizedEmail
     });
 
