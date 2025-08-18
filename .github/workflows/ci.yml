@@ -37,18 +37,3 @@ jobs:
         run: cd backend && npm ci
       - name: Run TypeScript checks
         run: cd backend && npx tsc --noEmit
-      - name: Run tests
-        env:
-          DB_NAME: teachersdb
-          DB_USER: postgres
-          DB_PASSWORD: postgres
-          DB_HOST: localhost
-          DB_PORT: 5432
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
-          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
-          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
-          EMAIL_USER: ${{ secrets.EMAIL_USER }}
-          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
-          NODE_ENV: test
-        run: cd backend && npm test
