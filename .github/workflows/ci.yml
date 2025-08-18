@@ -37,8 +37,6 @@ jobs:
         run: cd backend && npm ci
       - name: Run TypeScript checks
         run: cd backend && npx tsc --noEmit
-      - name: Run DB migrations
-        run: cd backend && npx sequelize-cli db:migrate
       - name: Run tests
         env:
           DB_NAME: teachersdb
