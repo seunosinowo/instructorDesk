@@ -1,57 +1,56 @@
 import request from 'supertest';
 import app from '../src/server';
-import { User } from '../src/models/user.model';
-import { Teacher } from '../src/models/teacher.model';
-import { Student } from '../src/models/student.model';
-import { Post } from '../src/models/post.model';
-import { Comment } from '../src/models/comment.model';
-import { Like } from '../src/models/like.model';
-import { Connection } from '../src/models/connection.model';
-import { Review } from '../src/models/review.model';
-import { Message } from '../src/models/message.model';
+import { User, Teacher, Student } from '../src/models';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import sequelize from '../src/config/database';
+import { Op } from 'sequelize';
 
 describe('Profile Routes', () => {
   let token: string;
   let userId: string;
 
+  beforeAll(async () => {
+    try {
+      await sequelize.authenticate();
+      console.log('Test database connected');
+      await sequelize.sync({ force: true });
+      console.log('Test database synced');
+    } catch (error) {
+      console.error('Test database setup failed:', error);
+      throw error;
+    }
+  });
+
   beforeEach(async () => {
-    // Skip sync to avoid conflicts
     const user = await User.create({
       email: 'test@example.com',
       password: await bcrypt.hash('password123', 10),
       role: 'teacher',
       name: 'Test User',
       emailConfirmed: true,
-      profileCompleted: true // Add this for consistency
+      profileCompleted: true
     });
-    userId = user.id; // Store the UUID
+    userId = user.id;
     token = jwt.sign({ id: user.id, role: 'teacher' }, process.env.JWT_SECRET!);
   });
 
   afterEach(async () => {
-    // Clean up only test data, not all data
-    await Teacher.destroy({ where: { userId }, force: true });
-    await Student.destroy({ 
-      where: { 
-        userId: { [require('sequelize').Op.in]: await User.findAll({
-          where: { email: { [require('sequelize').Op.like]: '%@test.com' } },
-          attributes: ['id']
-        }).then(users => users.map(u => u.id))}
-      }, 
-      force: true 
-    });
+    if (userId) {
+      await Teacher.destroy({ where: { userId }, force: true });
+      await Student.destroy({ 
+        where: { 
+          userId: { [Op.in]: await User.findAll({
+            where: { email: { [Op.like]: '%@example.com' } },
+            attributes: ['id']
+          }).then(users => users.map(u => u.id))}
+        }, 
+        force: true 
+      });
+    }
     await User.destroy({ 
       where: { 
-        email: { [require('sequelize').Op.like]: '%@test.com' } 
-      }, 
-      force: true 
-    });
-    await User.destroy({ 
-      where: { 
-        email: { [require('sequelize').Op.like]: '%@example.com' } 
+        email: { [Op.like]: '%@example.com' } 
       }, 
       force: true 
     });
@@ -59,9 +58,9 @@ describe('Profile Routes', () => {
 
   afterAll(async () => {
     try {
-      // Add small delay to ensure all operations complete
       await new Promise(resolve => setTimeout(resolve, 100));
       await sequelize.close();
+      console.log('Test database connection closed');
     } catch (error) {
       // Silently handle connection close errors
     }
@@ -82,21 +81,20 @@ describe('Profile Routes', () => {
 
   it('should get user profile', async () => {
     const res = await request(app)
-      .get(`/api/profile/${userId}`) // Use the actual UUID
+      .get(`/api/profile/${userId}`)
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('profile');
   });
 
   it('should update student profile', async () => {
-    // Create a student user
     const studentUser = await User.create({
-      email: 'student@test.com',
-      password: await bcrypt.hash('password123', 10), // Hash the password
+      email: 'student@example.com',
+      password: await bcrypt.hash('password123', 10),
       role: 'student',
       name: 'Test Student',
       emailConfirmed: true,
-      profileCompleted: true // Add this for consistency
+      profileCompleted: true
     });
 
     const studentToken = jwt.sign({ id: studentUser.id, role: 'student' }, process.env.JWT_SECRET!);

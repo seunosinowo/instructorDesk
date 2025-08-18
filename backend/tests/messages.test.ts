@@ -1,17 +1,10 @@
 import request from 'supertest';
 import app from '../src/server';
-import { User } from '../src/models/user.model';
-import { Teacher } from '../src/models/teacher.model';
-import { Student } from '../src/models/student.model';
-import { Post } from '../src/models/post.model';
-import { Comment } from '../src/models/comment.model';
-import { Like } from '../src/models/like.model';
-import { Connection } from '../src/models/connection.model';
-import { Review } from '../src/models/review.model';
-import { Message } from '../src/models/message.model';
+import { User, Teacher, Student, Message } from '../src/models';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import sequelize from '../src/config/database';
+import { Op } from 'sequelize';
 
 describe('Message Routes', () => {
   let token: string;
@@ -19,15 +12,26 @@ describe('Message Routes', () => {
   let teacher: User;
   let student: User;
 
+  beforeAll(async () => {
+    try {
+      await sequelize.authenticate();
+      console.log('Test database connected');
+      await sequelize.sync({ force: true });
+      console.log('Test database synced');
+    } catch (error) {
+      console.error('Test database setup failed:', error);
+      throw error;
+    }
+  });
+
   beforeEach(async () => {
-    // Skip sync to avoid conflicts
     student = await User.create({
       email: 'student@example.com',
       password: await bcrypt.hash('password123', 10),
       role: 'student',
       name: 'Student User',
       emailConfirmed: true,
-      profileCompleted: true  // Add this to allow messaging
+      profileCompleted: true
     });
     teacher = await User.create({
       email: 'teacher@example.com',
@@ -42,16 +46,17 @@ describe('Message Routes', () => {
   });
 
   afterEach(async () => {
-    // Clean up only test data, not all data
-    await Message.destroy({ where: { senderId: [student.id, teacher.id] }, force: true });
-    await User.destroy({ where: { email: { [require('sequelize').Op.like]: '%@example.com' } }, force: true });
+    if (student && teacher) {
+      await Message.destroy({ where: { senderId: [student.id, teacher.id] }, force: true });
+    }
+  await User.destroy({ where: { email: { [Op.like]: '%@example.com' } }, force: true });
   });
 
   afterAll(async () => {
     try {
-      // Add small delay to ensure all operations complete
       await new Promise(resolve => setTimeout(resolve, 100));
       await sequelize.close();
+      console.log('Test database connection closed');
     } catch (error) {
       // Silently handle connection close errors
     }
@@ -75,7 +80,6 @@ describe('Message Routes', () => {
   });
 
   it('should get messages between student and teacher with existing messages', async () => {
-    // Create a message
     await Message.create({ 
       senderId: student.id, 
       receiverId: teacher.id, 

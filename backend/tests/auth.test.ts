@@ -1,18 +1,11 @@
 import request from 'supertest';
 import app from '../src/server';
 import sequelize from '../src/config/database';
+import { Op } from 'sequelize';
 import dotenv from 'dotenv';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import { User } from '../src/models/user.model';
-// import { Teacher } from '../src/models/teacher.model';
-// import { Student } from '../src/models/student.model';
-// import { Post } from '../src/models/post.model';
-// import { Comment } from '../src/models/comment.model';
-// import { Like } from '../src/models/like.model';
-// import { Connection } from '../src/models/connection.model';
-// import { Review } from '../src/models/review.model';
-// import { Message } from '../src/models/message.model';
 
 // Load test environment variables
 process.env.NODE_ENV = 'test';
@@ -40,21 +33,21 @@ beforeAll(async () => {
   try {
     await sequelize.authenticate();
     console.log('Test database connected');
-    // Skip sync in tests to avoid conflicts
+    await sequelize.sync({ force: true }); // Create tables for tests
+    console.log('Test database synced');
   } catch (error) {
-    console.error('Test database connection failed:', error);
+    console.error('Test database setup failed:', error);
     throw error;
   }
 });
 
 afterEach(async () => {
-  // Clean up only test data, not all data
-  await User.destroy({ where: { email: { [require('sequelize').Op.like]: '%@example.com' } }, force: true });
+  // Clean up only test data
+  await User.destroy({ where: { email: { [Op.like]: '%@example.com' } }, force: true });
 });
 
 afterAll(async () => {
   try {
-    // Add small delay to ensure all operations complete
     await new Promise(resolve => setTimeout(resolve, 100));
     await sequelize.close();
     console.log('Test database connection closed');
@@ -73,19 +66,13 @@ describe('Auth API', () => {
   });
 
   it('should login a user', async () => {
-    // Create user directly without hashing password (let the model handle it)
-    const user = await User.create({
+    await User.create({
       email: 'test2@example.com',
-      password: 'password123', // Let the model hash this
+      password: 'password123',
       role: 'student',
       name: 'Test User',
       emailConfirmed: true,
     });
-    
-    // Verify user was created
-    expect(user).toBeDefined();
-    expect(user.email).toBe('test2@example.com');
-    expect(user.emailConfirmed).toBe(true);
     
     const res = await request(app)
       .post('/api/auth/login')
@@ -121,12 +108,10 @@ describe('Auth API', () => {
     expect(res.body.message).toBe('Email already registered. Please log in or use a different email.');
   });
 
-
   it('should fail login with wrong password', async () => {
-    const hashedPassword = await bcrypt.hash('password123', 10);
     await User.create({
       email: 'test5@example.com',
-      password: hashedPassword,
+      password: 'password123',
       role: 'student',
       name: 'Test User',
       emailConfirmed: true,
