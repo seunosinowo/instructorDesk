@@ -4,7 +4,7 @@ const Footer: React.FC = () => {
   return (
     <footer className="bg-gray-900 text-white pt-16 pb-8">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           <div>
             <div className="flex items-center mb-6">
               <span className="bg-white text-orange-600 px-2 py-1 rounded-lg mr-2 font-bold text-xl">T</span>
@@ -30,24 +30,13 @@ const Footer: React.FC = () => {
           </div>
           
           <div>
-            <h3 className="text-lg font-bold mb-6">For Students</h3>
+            <h3 className="text-lg font-bold mb-6">Menu</h3>
             <ul className="space-y-3">
-              <li><a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">Find Teachers</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">Study Groups</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">Learning Resources</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">Progress Tracking</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">Student Discounts</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 className="text-lg font-bold mb-6">For Teachers</h3>
-            <ul className="space-y-3">
-              <li><a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">Connect with Students</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">Professional Development</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">Resource Sharing</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">Teacher Community</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-orange-400 transition-colors">Premium Features</a></li>
+              <li><a href="/signup" className="text-gray-400 hover:text-orange-400 transition-colors">Feed</a></li>
+              <li><a href="/signup" className="text-gray-400 hover:text-orange-400 transition-colors">Messages</a></li>
+              <li><a href="/signup" className="text-gray-400 hover:text-orange-400 transition-colors">Profile</a></li>
+              <li><a href="/signup" className="text-gray-400 hover:text-orange-400 transition-colors">Teachers</a></li>
+              <li><a href="/signup" className="text-gray-400 hover:text-orange-400 transition-colors">Students</a></li>
             </ul>
           </div>
           

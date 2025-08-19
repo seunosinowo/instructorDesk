@@ -219,7 +219,7 @@ router.post('/forgot-password', async (req, res) => {
     if (user) {
       const resetToken = jwt.sign({ email }, process.env.JWT_SECRET!, { expiresIn: '1h' });
       await User.update({ confirmationToken: resetToken }, { where: { email } });
-      await sendPasswordResetEmail(email, resetToken);
+      await sendPasswordResetEmail(user.name, email, resetToken);
     }
     
     // Always return success for security
@@ -228,6 +228,43 @@ router.post('/forgot-password', async (req, res) => {
     });
   } catch (error) {
     console.error('Password reset error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Reset password endpoint
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: 'Token and new password are required.' });
+    }
+
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    } catch (err) {
+      return res.status(400).json({ message: 'Invalid or expired token.' });
+    }
+
+    const user = await User.findOne({ where: { email: decoded.email, confirmationToken: token } });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired token.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await User.update(
+      { password: hashedPassword, confirmationToken: '' },
+      { where: { email: user.email } }
+    );
+
+    return res.json({ message: 'Password reset successful. You can now log in.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
     return res.status(500).json({ message: 'Server error' });
   }
 });

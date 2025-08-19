@@ -46,9 +46,8 @@ const ResetPassword: React.FC = () => {
       const token = searchParams.get('token');
       await axios.post(`${import.meta.env.VITE_API_URL}/auth/reset-password`, {
         token,
-        password
+        newPassword: password
       });
-      
       setMessage('Password reset successfully! Redirecting to login...');
       setTimeout(() => navigate('/login'), 2000);
     } catch (err: any) {
