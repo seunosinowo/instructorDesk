@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node dist/src/server.js",
     "build": "tsc",
+    "postbuild": "node copy-email-template.js",
     "dev": "nodemon src/server.ts",
     "test": "jest --detectOpenHandles"
   },
