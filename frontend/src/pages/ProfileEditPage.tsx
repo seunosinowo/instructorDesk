@@ -9,6 +9,8 @@ import {
   Users, Languages, Save, X, Plus,
   ChevronLeft, Edit
 } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faNairaSign } from '@fortawesome/free-solid-svg-icons';
 import type { TeacherProfile, StudentProfile } from '../types';
 
 const ProfileEditPage: React.FC = () => {
@@ -653,7 +655,7 @@ const TeacherEditSection: React.FC<{
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Hourly Rate ($)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Hourly Rate (<FontAwesomeIcon icon={faNairaSign} />)</label>
             <input
               type="number"
               value={hourlyRate}
@@ -990,7 +992,7 @@ const StudentEditSection: React.FC<{
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Budget ($/hour)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Budget (<FontAwesomeIcon icon={faNairaSign} />/hour)</label>
             <input
               type="number"
               value={budget}

@@ -521,12 +521,12 @@ const StudentProfileSetup: React.FC = () => {
 
             {/* Budget */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Budget per Hour (USD)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Budget per Hour (₦)</label>
               <input
                 type="number"
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
-                placeholder="e.g., 20"
+                placeholder="e.g., 2000"
                 min="0"
                 step="0.01"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"

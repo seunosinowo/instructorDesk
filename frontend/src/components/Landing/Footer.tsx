@@ -31,13 +31,17 @@ const Footer: React.FC = () => {
           
           <div>
             <h3 className="text-lg font-bold mb-6">Menu</h3>
-            <ul className="space-y-3">
-              <li><a href="/signup" className="text-gray-400 hover:text-orange-400 transition-colors">Feed</a></li>
-              <li><a href="/signup" className="text-gray-400 hover:text-orange-400 transition-colors">Messages</a></li>
-              <li><a href="/signup" className="text-gray-400 hover:text-orange-400 transition-colors">Profile</a></li>
-              <li><a href="/signup" className="text-gray-400 hover:text-orange-400 transition-colors">Teachers</a></li>
-              <li><a href="/signup" className="text-gray-400 hover:text-orange-400 transition-colors">Students</a></li>
-            </ul>
+            <div className="grid grid-cols-2 gap-8">
+              <ul className="space-y-3">
+                <li><a href="/register" className="text-gray-400 hover:text-orange-400 transition-colors">Feed</a></li>
+                <li><a href="/register" className="text-gray-400 hover:text-orange-400 transition-colors">Messages</a></li>
+                <li><a href="/register" className="text-gray-400 hover:text-orange-400 transition-colors">Profile</a></li>
+              </ul>
+              <ul className="space-y-3">
+                <li><a href="/register" className="text-gray-400 hover:text-orange-400 transition-colors">Teachers</a></li>
+                <li><a href="/register" className="text-gray-400 hover:text-orange-400 transition-colors">Students</a></li>
+              </ul>
+            </div>
           </div>
           
           <div>
@@ -65,11 +69,6 @@ const Footer: React.FC = () => {
         
         <div className="border-t border-gray-800 pt-8 mt-8 text-center text-gray-500 text-sm">
           <p>© {new Date().getFullYear()} Teacherrs. All rights reserved.</p>
-          <div className="mt-4 flex justify-center gap-6">
-            <a href="#" className="hover:text-orange-400 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-orange-400 transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-orange-400 transition-colors">Cookie Policy</a>
-          </div>
         </div>
       </div>
     </footer>

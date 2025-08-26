@@ -7,9 +7,11 @@ import {
   Award, Target, BarChart2, Edit, Star, Briefcase, 
   Layout, Bookmark, Clock, Globe, CheckCircle, 
   MessageCircle, Phone, Video, Mail as MailIcon,
-  ExternalLink, Github, Linkedin, Twitter, DollarSign,
+  ExternalLink, Github, Linkedin, Twitter,
   Calendar, Users, Languages
 } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faNairaSign } from '@fortawesome/free-solid-svg-icons';
 import type { User, TeacherProfile, StudentProfile } from '../types';
 
 const ProfilePage: React.FC = () => {
@@ -206,8 +208,8 @@ const ProfilePage: React.FC = () => {
                     {profile.role}
                   </span>
                   {profile.role === 'teacher' && (profile.profile as TeacherProfile)?.hourlyRate && (
-                    <span className="ml-3 bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
-                      ${(profile.profile as TeacherProfile).hourlyRate}/hr
+                    <span className="ml-3 bg-white/20 px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                      <FontAwesomeIcon icon={faNairaSign} className="inline mr-1" />{(profile.profile as TeacherProfile).hourlyRate}/hr
                     </span>
                   )}
                 </div>
@@ -893,10 +895,10 @@ const StudentProfileView: React.FC<{ profile: StudentProfile }> = ({ profile }) 
               {profile.budget && (
                 <div>
                   <h4 className="font-medium text-gray-700 mb-2 flex items-center">
-                    <DollarSign className="text-gray-500 mr-2" size={18} />
+                    <FontAwesomeIcon icon={faNairaSign} className="text-gray-500 mr-2" />
                     Budget Range
                   </h4>
-                  <p className="text-gray-800 bg-gray-50 p-3 rounded-lg">Up to ${profile.budget}/hour</p>
+                  <p className="text-gray-800 bg-gray-50 p-3 rounded-lg">Up to <FontAwesomeIcon icon={faNairaSign} className="inline" />{profile.budget}/hour</p>
                 </div>
               )}
             </div>
@@ -988,9 +990,9 @@ const ContactInfoCard: React.FC<{ profile: User }> = ({ profile }) => {
 
     if (teacherProfile.hourlyRate) {
       contactMethods.push({
-        icon: <DollarSign />,
+        icon: <FontAwesomeIcon icon={faNairaSign} />,
         label: 'Hourly Rate',
-        value: `$${teacherProfile.hourlyRate}/hour`
+        value: <><FontAwesomeIcon icon={faNairaSign} className="inline" />{teacherProfile.hourlyRate}/hour</>,
       });
     }
   }
@@ -1000,9 +1002,9 @@ const ContactInfoCard: React.FC<{ profile: User }> = ({ profile }) => {
     
     if (studentProfile.budget) {
       contactMethods.push({
-        icon: <DollarSign />,
+        icon: <FontAwesomeIcon icon={faNairaSign} />,
         label: 'Budget Range',
-        value: `Up to $${studentProfile.budget}/hour`
+        value: <>Up to <FontAwesomeIcon icon={faNairaSign} className="inline" />{studentProfile.budget}/hour</>,
       });
     }
   }
@@ -1091,10 +1093,10 @@ const TeacherStatsCard: React.FC<{ profile: TeacherProfile }> = ({ profile }) =>
       {profile.hourlyRate && (
         <div className="mt-4 bg-white/20 p-4 rounded-xl text-center">
           <div className="text-white mb-2 flex justify-center">
-            <DollarSign />
+            <FontAwesomeIcon icon={faNairaSign} />
           </div>
           <p className="text-sm text-white/80">Hourly Rate</p>
-          <p className="text-2xl font-bold text-white">${profile.hourlyRate}</p>
+          <p className="text-2xl font-bold text-white"><FontAwesomeIcon icon={faNairaSign} className="inline" />{profile.hourlyRate}</p>
         </div>
       )}
     </motion.div>

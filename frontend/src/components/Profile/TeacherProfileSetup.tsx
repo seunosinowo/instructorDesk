@@ -473,12 +473,12 @@ const TeacherProfileSetup: React.FC = () => {
 
             {/* Hourly Rate */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Hourly Rate (USD)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Hourly Rate (₦)</label>
               <input
                 type="number"
                 value={hourlyRate}
                 onChange={(e) => setHourlyRate(e.target.value)}
-                placeholder="e.g., 25"
+                placeholder="e.g., 2000"
                 min="0"
                 step="0.01"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
