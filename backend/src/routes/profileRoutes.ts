@@ -1,7 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
-import { User, Message } from '../models';
+import { User, Message, School } from '../models';
 import { Teacher, Student } from '../models';
 import cloudinary from '../config/cloudinary';
 import { requireProfileCompletion } from '../middleware/profileCompletionMiddleware';
@@ -38,6 +38,8 @@ router.get('/debug/:id', authMiddleware, async (req: express.Request & { user?: 
       profileData = await Teacher.findOne({ where: { userId: user.id } });
     } else if (user.role === 'student') {
       profileData = await Student.findOne({ where: { userId: user.id } });
+    } else if (user.role === 'school') {
+      profileData = await School.findOne({ where: { userId: user.id } });
     }
 
     res.json({
@@ -223,6 +225,62 @@ router.put('/', authMiddleware, async (req: express.Request & { user?: { id: str
       console.log('Student data to upsert:', JSON.stringify(studentData, null, 2));
       const [studentProfile, created] = await Student.upsert(studentData);
       console.log('Student profile upserted:', created ? 'created' : 'updated', studentProfile.toJSON());
+    } else if (user.role === 'school') {
+      console.log('Processing school profile update');
+      const {
+        schoolName,
+        address,
+        city,
+        state,
+        country,
+        phoneNumber,
+        website,
+        schoolType,
+        gradeLevels,
+        accreditations,
+        studentCount,
+        teacherCount,
+        establishedYear,
+        description,
+        facilities,
+        extracurricularActivities,
+        socialLinks
+      } = req.body;
+
+      const schoolData = {
+        userId: user.id,
+        schoolName,
+        address,
+        city,
+        state,
+        country,
+        phoneNumber,
+        website,
+        schoolType,
+        gradeLevels,
+        accreditations,
+        studentCount,
+        teacherCount,
+        establishedYear,
+        description,
+        facilities,
+        extracurricularActivities,
+        socialLinks
+      };
+
+      console.log('School data to upsert:', JSON.stringify(schoolData, null, 2));
+      const [schoolProfile, created] = await School.upsert(schoolData);
+      console.log('School profile upserted:', created ? 'created' : 'updated', schoolProfile.toJSON());
+
+      // Update user name if schoolName is provided
+      if (schoolName && typeof schoolName === 'string') {
+        console.log('Updating user name to:', schoolName);
+        await User.update(
+          { name: schoolName.trim() },
+          { where: { id: user.id } }
+        );
+        console.log('User name updated successfully');
+      }
     }
 
     console.log('Profile update completed successfully');
@@ -320,6 +378,47 @@ router.post('/', authMiddleware, async (req: express.Request & { user?: { id: st
         languages,
         socialLinks
       });
+    } else if (user.role === 'school') {
+      const {
+        schoolName,
+        address,
+        city,
+        state,
+        country,
+        phoneNumber,
+        website,
+        schoolType,
+        gradeLevels,
+        accreditations,
+        studentCount,
+        teacherCount,
+        establishedYear,
+        description,
+        facilities,
+        extracurricularActivities,
+        socialLinks
+      } = req.body;
+
+      await School.upsert({
+        userId: user.id,
+        schoolName,
+        address,
+        city,
+        state,
+        country,
+        phoneNumber,
+        website,
+        schoolType,
+        gradeLevels,
+        accreditations,
+        studentCount,
+        teacherCount,
+        establishedYear,
+        description,
+        facilities,
+        extracurricularActivities,
+        socialLinks
+      });
     }
 
     await User.update({ profileCompleted: true }, { where: { id: user.id } });
@@ -377,6 +476,8 @@ router.delete('/delete', authMiddleware, async (req: express.Request & { user?: 
       await Teacher.destroy({ where: { userId: user.id } });
     } else if (user.role === 'student') {
       await Student.destroy({ where: { userId: user.id } });
+    } else if (user.role === 'school') {
+      await School.destroy({ where: { userId: user.id } });
     }
 
     // Delete all messages where user is sender or receiver
@@ -412,6 +513,9 @@ router.get('/:id', authMiddleware, async (req, res) => {
           (profile as any).goals = (profile as any).goals.split('\n').filter((goal: string) => goal.trim());
         }
       }
+    } else if (user.role === 'school') {
+      const school = await School.findOne({ where: { userId: user.id } });
+      profile = school ? school.toJSON() : {};
     }
 
     res.json({ ...user.toJSON(), profile });
@@ -465,6 +569,9 @@ router.get('/', authMiddleware, async (req: express.Request & { user?: { id: str
               (profile as any).goals = (profile as any).goals.split('\n').filter((goal: string) => goal.trim());
             }
           }
+        } else if (user.role === 'school') {
+          const school = await School.findOne({ where: { userId: user.id } });
+          profile = school ? school.toJSON() : {};
         }
         return { ...user.toJSON(), profile };
       })

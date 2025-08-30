@@ -4,9 +4,12 @@ import { Like } from './like.model';
 import { Comment } from './comment.model';
 import { Teacher } from './teacher.model';
 import { Student } from './student.model';
+import { School } from './school.model';
 import { Connection } from './connection.model';
 import { Review } from './review.model';
 import { Message } from './message.model';
+import { Discussion } from './discussion.model';
+import { DiscussionComment } from './discussionComment.model';
 
 // Define all associations here to avoid circular dependencies
 const setupAssociations = () => {
@@ -19,6 +22,7 @@ const setupAssociations = () => {
   User.hasMany(Review, { foreignKey: 'userId', as: 'reviews' });
   User.hasOne(Teacher, { foreignKey: 'userId', as: 'teacherProfile' });
   User.hasOne(Student, { foreignKey: 'userId', as: 'studentProfile' });
+  User.hasOne(School, { foreignKey: 'userId', as: 'schoolProfile' });
 
   // Post associations
   Post.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -39,6 +43,9 @@ const setupAssociations = () => {
   // Student associations
   Student.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+  // School associations
+  School.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
   // Connection associations
   Connection.belongsTo(User, { foreignKey: 'userId1', as: 'initiator' });
   Connection.belongsTo(User, { foreignKey: 'userId2', as: 'receiver' });
@@ -49,6 +56,18 @@ const setupAssociations = () => {
   // Message associations (if needed)
   Message.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
   Message.belongsTo(User, { foreignKey: 'receiverId', as: 'receiver' });
+
+  // Discussion associations
+  User.hasMany(Discussion, { foreignKey: 'userId', as: 'discussions' });
+  Discussion.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+  Discussion.hasMany(DiscussionComment, { foreignKey: 'discussionId', as: 'comments' });
+
+  // Discussion Comment associations
+  User.hasMany(DiscussionComment, { foreignKey: 'userId', as: 'discussionComments' });
+  DiscussionComment.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+  DiscussionComment.belongsTo(Discussion, { foreignKey: 'discussionId', as: 'discussion' });
+  DiscussionComment.hasMany(DiscussionComment, { foreignKey: 'parentId', as: 'replies' });
+  DiscussionComment.belongsTo(DiscussionComment, { foreignKey: 'parentId', as: 'parent' });
 };
 
 // Call the setup function
@@ -61,8 +80,11 @@ export {
   Comment,
   Teacher,
   Student,
+  School,
   Connection,
   Review,
   Message,
+  Discussion,
+  DiscussionComment,
   setupAssociations
 };

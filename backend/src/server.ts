@@ -10,7 +10,7 @@ sequelize.authenticate()
   .then(() => {
     // Only sync in development, and only if tables don't exist
     if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
-      return sequelize.sync({ alter: false });
+      return sequelize.sync({ alter: true });
     }
   })
   .then(() => {

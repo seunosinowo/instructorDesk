@@ -7,6 +7,7 @@ interface PostAttributes {
   content: string;
   type: 'general' | 'educational' | 'job' | 'learning' | 'achievement' | 'question';
   imageUrl?: string;
+  videoUrl?: string;
   likesCount: number;
   commentsCount: number;
   createdAt?: Date;
@@ -21,6 +22,7 @@ class Post extends Model<PostAttributes, PostCreationAttributes> implements Post
   public content!: string;
   public type!: 'general' | 'educational' | 'job' | 'learning' | 'achievement' | 'question';
   public imageUrl?: string;
+  public videoUrl?: string;
   public likesCount!: number;
   public commentsCount!: number;
   public createdAt!: Date;
@@ -55,6 +57,9 @@ Post.init({
     defaultValue: 'general'
   },
   imageUrl: {
+    type: DataTypes.STRING
+  },
+  videoUrl: {
     type: DataTypes.STRING
   },
   likesCount: {

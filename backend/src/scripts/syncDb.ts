@@ -22,7 +22,9 @@ async function syncDatabase() {
       // Create all tables without dropping existing ones
       await sequelize.sync();
     } else {
-      console.log('Tables already exist. No changes made.');
+      console.log('Tables already exist. Updating schema...');
+      // Force alter existing tables to add missing columns
+      await sequelize.sync({ alter: true });
     }
     console.log('Database synchronized successfully');
     process.exit(0);

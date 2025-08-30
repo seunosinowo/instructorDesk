@@ -44,9 +44,25 @@ router.post('/register', async (req, res) => {
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      return res.status(400).json({ 
+      let userTypeMessage = '';
+      switch (existingUser.role) {
+        case 'teacher':
+          userTypeMessage = 'This email is already registered as a teacher account.';
+          break;
+        case 'student':
+          userTypeMessage = 'This email is already registered as a student account.';
+          break;
+        case 'school':
+          userTypeMessage = 'This email is already registered as a school account. Please use the school login or contact support.';
+          break;
+        default:
+          userTypeMessage = 'This email is already registered.';
+      }
+
+      return res.status(400).json({
         status: 'error',
-        message: 'Email already registered. Please log in or use a different email.' 
+        message: `${userTypeMessage} Each email can only be used for one account type. Please use a different email or contact support if you need to change your account type.`,
+        existingUserType: existingUser.role
       });
     }
 

@@ -117,4 +117,66 @@ router.post('/post-image', authMiddleware, upload.single('image'), async (req: e
   }
 });
 
+// Configure multer for video uploads
+const videoUpload = multer({
+  storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB limit for videos
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('video/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only video files are allowed'));
+    }
+  },
+});
+
+// Upload post video
+router.post('/post-video', authMiddleware, videoUpload.single('video'), async (req: express.Request & { user?: { id: string; role: string } }, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const userId = req.user!.id;
+
+    // Upload to Cloudinary
+    const uploadResult = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'video',
+          folder: 'post_videos',
+          public_id: `post_${userId}_${Date.now()}`,
+          transformation: [
+            { quality: 'auto', fetch_format: 'auto' }
+          ]
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      ).end(req.file!.buffer);
+    });
+
+    const result = uploadResult as any;
+
+    // Basic duration check (Cloudinary provides duration in seconds)
+    if (result.duration && result.duration > 60) {
+      // Delete the uploaded video if it exceeds 1 minute
+      await cloudinary.uploader.destroy(result.public_id, { resource_type: 'video' });
+      return res.status(400).json({ error: 'Video must be 1 minute or less' });
+    }
+
+    res.json({
+      message: 'Video uploaded successfully',
+      videoUrl: result.secure_url
+    });
+
+  } catch (error) {
+    console.error('Post video upload error:', error);
+    res.status(500).json({ error: 'Failed to upload video' });
+  }
+});
+
 export default router;

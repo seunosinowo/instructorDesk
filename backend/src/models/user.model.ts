@@ -6,7 +6,7 @@ interface UserAttributes {
   id: string;
   email: string;
   password: string;
-  role: 'teacher' | 'student';
+  role: 'teacher' | 'student' | 'school';
   name: string;
   bio?: string;
   profilePicture?: string;
@@ -25,7 +25,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public id!: string;
   public email!: string;
   public password!: string;
-  public role!: 'teacher' | 'student';
+  public role!: 'teacher' | 'student' | 'school';
   public name!: string;
   public bio?: string;
   public profilePicture?: string;
@@ -58,7 +58,7 @@ User.init({
     allowNull: false
   },
   role: {
-    type: DataTypes.ENUM('teacher', 'student'),
+    type: DataTypes.ENUM('teacher', 'student', 'school'),
     allowNull: false
   },
   name: {

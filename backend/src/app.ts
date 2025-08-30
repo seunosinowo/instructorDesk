@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/authRoutes';
+import schoolAuthRoutes from './routes/schoolAuthRoutes';
+import schoolRoutes from './routes/schoolRoutes';
 import teacherRoutes from './routes/teacherRoutes';
 import reviewRoutes from './routes/reviewRoutes';
 import postRoutes from './routes/postRoutes';
@@ -13,6 +15,7 @@ import connectionRoutes from './routes/connectionRoutes';
 import profileRoutes from './routes/profileRoutes';
 import messageRoutes from './routes/messageRoutes';
 import uploadRoutes from './routes/uploadRoutes';
+import discussionRoutes from './routes/discussionRoutes';
 import { errorMiddleware } from './middleware/errorMiddleware';
 
 const app = express();
@@ -32,6 +35,8 @@ app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 1000 }));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/school-auth', schoolAuthRoutes);
+app.use('/api/schools', schoolRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/posts', postRoutes);
@@ -41,6 +46,7 @@ app.use('/api/connections', connectionRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/discussions', discussionRoutes);
 
 app.use(errorMiddleware);
 

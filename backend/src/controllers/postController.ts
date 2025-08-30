@@ -16,17 +16,26 @@ export const createPost = [
       const { content } = req.body;
       const userId = req.user.id;
       let image;
+      let video;
 
       if (req.file) {
-        const result = await uploadToCloudinary(req.file) as { secure_url: string };
-        image = result.secure_url;
+        // Check if it's a video file
+        if (req.file.mimetype.startsWith('video/')) {
+          // Basic video validation - you might want to add duration check here
+          const result = await uploadToCloudinary(req.file) as { secure_url: string };
+          video = result.secure_url;
+        } else if (req.file.mimetype.startsWith('image/')) {
+          const result = await uploadToCloudinary(req.file) as { secure_url: string };
+          image = result.secure_url;
+        }
       }
 
       const post = await Post.create({
         userId,
         content,
         type: 'general',
-        imageUrl: image
+        imageUrl: image,
+        videoUrl: video
       });
 
       res.status(201).json(post);

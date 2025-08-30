@@ -7,13 +7,14 @@ const router = express.Router();
 
 // Create a new post
 router.post('/', authMiddleware, requireProfileCompletion, async (req: express.Request & { user?: { id: string; role: string } }, res) => {
-  const { content, type = 'general', imageUrl } = req.body;
+  const { content, type = 'general', imageUrl, videoUrl } = req.body;
   try {
-    const post = await Post.create({ 
-      userId: req.user!.id as string, 
+    const post = await Post.create({
+      userId: req.user!.id as string,
       content,
       type,
-      imageUrl
+      imageUrl,
+      videoUrl
     });
     
     // Fetch the post with user details
@@ -40,10 +41,10 @@ router.get('/', authMiddleware, requireProfileCompletion, async (req, res) => {
     
     const posts = await Post.findAndCountAll({
       include: [
-        { 
-          model: User, 
+        {
+          model: User,
           as: 'user',
-          attributes: ['id', 'name', 'role', 'profilePicture'] 
+          attributes: ['id', 'name', 'role', 'profilePicture']
         },
         {
           model: Like,
@@ -146,28 +147,28 @@ router.put('/:id', authMiddleware, async (req: express.Request & { user?: { id: 
   try {
     const postId = req.params.id;
     const userId = req.user!.id;
-    const { content, imageUrl } = req.body;
-    
+    const { content, imageUrl, videoUrl } = req.body;
+
     // Check if user is the author
     const post = await Post.findByPk(postId);
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
-    
+
     if (post.userId !== userId) {
       return res.status(403).json({ message: 'Not authorized to edit this post' });
     }
-    
+
     // Update the post
-    await post.update({ content, ...(imageUrl && { imageUrl }) });
+    await post.update({ content, ...(imageUrl !== undefined && { imageUrl }), ...(videoUrl !== undefined && { videoUrl }) });
     
     // Fetch updated post with user details
     const updatedPost = await Post.findByPk(postId, {
       include: [
-        { 
-          model: User, 
+        {
+          model: User,
           as: 'user',
-          attributes: ['id', 'name', 'role', 'profilePicture'] 
+          attributes: ['id', 'name', 'role', 'profilePicture']
         },
         {
           model: Like,

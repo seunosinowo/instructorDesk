@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node", "jest", "express", "multer"],
+    "types": ["node", "jest", "express", "multer", "cors", "morgan", "jsonwebtoken", "bcryptjs"],
     "moduleResolution": "node"
   },
   "include": [

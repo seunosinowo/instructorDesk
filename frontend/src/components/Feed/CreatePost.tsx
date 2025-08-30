@@ -15,6 +15,10 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated, userProfile }) =
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [videoError, setVideoError] = useState<string | null>(null);
   const token = localStorage.getItem('token');
 
   const postTypes = [
@@ -38,14 +42,55 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated, userProfile }) =
     }
   };
 
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Clean up previous video preview if it exists
+      // No cleanup needed for data URLs
+
+      // Check video duration
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+
+      const objectUrl = URL.createObjectURL(file);
+      video.src = objectUrl;
+
+      video.onloadedmetadata = () => {
+        if (video.duration > 60) {
+          URL.revokeObjectURL(objectUrl);
+          setVideoError('Video must be 1 minute or less. Please select a shorter video.');
+          setSelectedVideo(null);
+          setVideoPreview(null);
+          return;
+        }
+        setVideoError(null);
+        setSelectedVideo(file);
+        // Use FileReader for preview instead of object URL
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setVideoPreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+        URL.revokeObjectURL(objectUrl);
+      };
+
+      video.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        setVideoError('Invalid video file. Please select a valid video.');
+        setSelectedVideo(null);
+        setVideoPreview(null);
+      };
+    }
+  };
+
   const uploadImage = async (): Promise<string | null> => {
     if (!selectedImage) return null;
-    
+
     setUploadingImage(true);
     try {
       const formData = new FormData();
       formData.append('image', selectedImage);
-      
+
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/upload/post-image`,
         formData,
@@ -56,7 +101,7 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated, userProfile }) =
           }
         }
       );
-      
+
       return response.data.imageUrl;
     } catch (error) {
       console.error('Failed to upload image:', error);
@@ -66,32 +111,75 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated, userProfile }) =
     }
   };
 
+  const uploadVideo = async (): Promise<string | null> => {
+    if (!selectedVideo) return null;
+
+    setUploadingVideo(true);
+    try {
+      const formData = new FormData();
+      formData.append('video', selectedVideo);
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/upload/post-video`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      return response.data.videoUrl;
+    } catch (error: any) {
+      console.error('Failed to upload video:', error);
+      if (error.response?.data?.error) {
+        setVideoError(error.response.data.error);
+      } else {
+        setVideoError('Failed to upload video. Please try again.');
+      }
+      return null;
+    } finally {
+      setUploadingVideo(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() && !selectedImage) return;
+    if (!content.trim() && !selectedImage && !selectedVideo) return;
 
     setLoading(true);
     try {
       let imageUrl = null;
+      let videoUrl = null;
+
       if (selectedImage) {
         imageUrl = await uploadImage();
       }
 
+      if (selectedVideo) {
+        videoUrl = await uploadVideo();
+      }
+
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/posts`,
-        { 
+        {
           content: content.trim(),
           type: postType,
-          imageUrl
+          imageUrl,
+          videoUrl
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       onPostCreated(response.data);
       setContent('');
       setPostType('general');
       setSelectedImage(null);
       setImagePreview(null);
+      setSelectedVideo(null);
+      setVideoPreview(null);
+      setVideoError(null);
       setIsExpanded(false);
     } catch (error) {
       console.error('Failed to create post:', error);
@@ -103,6 +191,12 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated, userProfile }) =
   const removeImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
+  };
+
+  const removeVideo = () => {
+    setSelectedVideo(null);
+    setVideoPreview(null);
+    setVideoError(null);
   };
 
   const selectedPostType = postTypes.find(type => type.value === postType);
@@ -182,14 +276,54 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated, userProfile }) =
                 animate={{ opacity: 1, height: 'auto' }}
                 className="relative"
               >
-                <img 
-                  src={imagePreview} 
-                  alt="Preview" 
+                <img
+                  src={imagePreview}
+                  alt="Preview"
                   className="w-full max-h-64 object-cover rounded-lg border border-gray-300"
                 />
                 <button
                   type="button"
                   onClick={removeImage}
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </motion.div>
+            )}
+
+            {/* Video Error */}
+            {videoError && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg"
+              >
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <span>{videoError}</span>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Video Preview */}
+            {videoPreview && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="relative"
+              >
+                <video
+                  src={videoPreview}
+                  controls
+                  className="w-full max-h-64 object-cover rounded-lg border border-gray-300"
+                />
+                <button
+                  type="button"
+                  onClick={removeVideo}
                   className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -219,6 +353,18 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated, userProfile }) =
                       className="hidden"
                     />
                   </label>
+                  <label className="flex items-center space-x-2 hover:text-orange-primary transition-colors cursor-pointer">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-sm">Video</span>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={handleVideoSelect}
+                      className="hidden"
+                    />
+                  </label>
                 </div>
 
                 <div className="flex space-x-3">
@@ -230,6 +376,9 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated, userProfile }) =
                       setPostType('general');
                       setSelectedImage(null);
                       setImagePreview(null);
+                      setSelectedVideo(null);
+                      setVideoPreview(null);
+                      setVideoError(null);
                     }}
                     className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                   >
@@ -237,13 +386,13 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostCreated, userProfile }) =
                   </button>
                   <button
                     type="submit"
-                    disabled={(!content.trim() && !selectedImage) || loading || uploadingImage}
+                    disabled={(!content.trim() && !selectedImage && !selectedVideo) || loading || uploadingImage || uploadingVideo}
                     className="px-6 py-2 bg-orange-primary text-white rounded-lg hover:bg-orange-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2"
                   >
-                    {(loading || uploadingImage) && (
+                    {(loading || uploadingImage || uploadingVideo) && (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                     )}
-                    <span>{uploadingImage ? 'Uploading...' : loading ? 'Posting...' : 'Post'}</span>
+                    <span>{uploadingImage ? 'Uploading...' : uploadingVideo ? 'Uploading...' : loading ? 'Posting...' : 'Post'}</span>
                   </button>
                 </div>
               </motion.div>

@@ -31,7 +31,15 @@ const ConfirmPage: React.FC = () => {
   };
 
   const handleProceed = () => {
-    navigate('/login');
+    // Check user's role and redirect to appropriate login page
+    const userRole = localStorage.getItem('role');
+
+    if (userRole === 'school') {
+      navigate('/school/login');
+    } else {
+      // Default to regular login for students and teachers
+      navigate('/login');
+    }
   };
 
   if (status === 'loading') {

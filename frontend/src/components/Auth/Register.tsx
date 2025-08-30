@@ -27,6 +27,10 @@ const Register: React.FC = () => {
     }
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/auth/register`, { email, password, role, name, bio });
+
+      // Store role in localStorage for email confirmation redirect
+      localStorage.setItem('role', role);
+
       setRegistrationEmail(email);
       setShowEmailConfirmation(true);
       setError('');
