@@ -36,15 +36,23 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ userProfile }) => {
             </h3>
             <div className="mt-1 flex items-center space-x-2">
               <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                userProfile?.role === 'teacher' 
-                  ? 'bg-blue-100 text-blue-800' 
-                  : 'bg-green-100 text-green-800'
+                userProfile?.role === 'teacher'
+                  ? 'bg-blue-100 text-blue-800'
+                  : userProfile?.role === 'student'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-purple-100 text-purple-800'
               }`}>
-                {userProfile?.role === 'teacher' ? 'Teacher' : 'Student'}
+                {userProfile?.role === 'teacher'
+                  ? 'Teacher'
+                  : userProfile?.role === 'student'
+                  ? 'Student'
+                  : 'School'}
               </span>
               <span className="text-sm text-gray-500">•</span>
               <span className="text-sm text-gray-600">
-                {userProfile?.profile?.location || 'Set Location'}
+                {userProfile?.role === 'school'
+                  ? `${userProfile?.profile?.city || 'Set Location'}, ${userProfile?.profile?.country || ''}`.trim()
+                  : userProfile?.profile?.location || 'Set Location'}
               </span>
             </div>
           </div>

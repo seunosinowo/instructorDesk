@@ -304,7 +304,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
           <div className="flex items-center space-x-3">
             {/* Profile Picture */}
             <button
-              onClick={() => navigate(`/profile/${post.user.id}`)}
+              onClick={() => navigate(post.user.role === 'school' ? `/schools/by-user/${post.user.id}` : `/profile/${post.user.id}`)}
               className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-orange-primary flex-shrink-0 hover:ring-2 hover:ring-orange-primary hover:ring-offset-2 transition-all"
             >
               {post.user.profilePicture ? (
@@ -322,7 +322,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
 
             <div className="space-y-0.5 sm:space-y-1">
               <button
-                onClick={() => navigate(`/profile/${post.user.id}`)}
+                onClick={() => navigate(post.user.role === 'school' ? `/schools/by-user/${post.user.id}` : `/profile/${post.user.id}`)}
                 className="font-semibold text-gray-800 hover:text-orange-primary transition-colors"
               >
                 {post.user.name}
@@ -442,9 +442,19 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
             {/* Post Image */}
             {post.imageUrl && (
               <div className="mt-4">
-                <img 
-                  src={post.imageUrl} 
-                  alt="Post content" 
+                <img
+                  src={post.imageUrl}
+                  alt="Post content"
+                  className="w-full rounded-lg max-h-96 object-cover"
+                />
+              </div>
+            )}
+            {/* Post Video */}
+            {post.videoUrl && (
+              <div className="mt-4">
+                <video
+                  src={post.videoUrl}
+                  controls
                   className="w-full rounded-lg max-h-96 object-cover"
                 />
               </div>
@@ -563,7 +573,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
                     {/* Commenter Profile Picture */}
                     <div className="flex-shrink-0">
                       <button
-                        onClick={() => navigate(`/profile/${c.user?.id}`)}
+                        onClick={() => navigate(c.user?.role === 'school' ? `/schools/by-user/${c.user.id}` : `/profile/${c.user?.id}`)}
                         className="block"
                       >
                         {c.user?.profilePicture ? (
@@ -585,7 +595,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onPostUpdated, onPostDeleted 
                       <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-200">
                         <div className="flex items-center space-x-2 mb-1">
                           <button
-                            onClick={() => navigate(`/profile/${c.user?.id}`)}
+                            onClick={() => navigate(c.user?.role === 'school' ? `/schools/by-user/${c.user.id}` : `/profile/${c.user?.id}`)}
                             className="font-semibold text-gray-800 hover:text-orange-primary transition-colors text-sm"
                           >
                             {c.user?.name || 'User'}

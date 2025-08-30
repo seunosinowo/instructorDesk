@@ -73,6 +73,30 @@ const ProfileEditPage: React.FC = () => {
     portfolio?: string;
   }>({});
 
+  // School-specific states
+  const [schoolName, setSchoolName] = useState('');
+  const [schoolAddress, setSchoolAddress] = useState('');
+  const [schoolCity, setSchoolCity] = useState('');
+  const [schoolState, setSchoolState] = useState('');
+  const [schoolCountry, setSchoolCountry] = useState('');
+  const [schoolPhoneNumber, setSchoolPhoneNumber] = useState('');
+  const [schoolWebsite, setSchoolWebsite] = useState('');
+  const [schoolType, setSchoolType] = useState('');
+  const [gradeLevels, setGradeLevels] = useState<string[]>([]);
+  const [accreditation, setAccreditation] = useState('');
+  const [studentCount, setStudentCount] = useState<number>(0);
+  const [teacherCount, setTeacherCount] = useState<number>(0);
+  const [establishedYear, setEstablishedYear] = useState<number>(0);
+  const [schoolDescription, setSchoolDescription] = useState('');
+  const [facilities, setFacilities] = useState<string[]>([]);
+  const [extracurricularActivities, setExtracurricularActivities] = useState<string[]>([]);
+  const [schoolSocialLinks, setSchoolSocialLinks] = useState<{
+    facebook?: string;
+    instagram?: string;
+    twitter?: string;
+    linkedin?: string;
+  }>({});
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!token || !userId) {
@@ -132,6 +156,25 @@ const ProfileEditPage: React.FC = () => {
             setLocation(profile.location || '');
             setLanguages(profile.languages || []);
             setStudentSocialLinks(profile.socialLinks || {});
+          } else if (userRole === 'school') {
+            const profile = userData.profile;
+            setSchoolName(profile.schoolName || '');
+            setSchoolAddress(profile.address || '');
+            setSchoolCity(profile.city || '');
+            setSchoolState(profile.state || '');
+            setSchoolCountry(profile.country || '');
+            setSchoolPhoneNumber(profile.phoneNumber || '');
+            setSchoolWebsite(profile.website || '');
+            setSchoolType(profile.schoolType || '');
+            setGradeLevels(profile.gradeLevels || []);
+            setAccreditation(profile.accreditations || '');
+            setStudentCount(profile.studentCount || 0);
+            setTeacherCount(profile.teacherCount || 0);
+            setEstablishedYear(profile.establishedYear || 0);
+            setSchoolDescription(profile.description || '');
+            setFacilities(profile.facilities || []);
+            setExtracurricularActivities(profile.extracurricularActivities || []);
+            setSchoolSocialLinks(profile.socialLinks || {});
           }
         }
       } catch (err) {
@@ -262,6 +305,27 @@ const ProfileEditPage: React.FC = () => {
           graduationYearType: typeof graduationYear,
           graduationYearNumber: Number(graduationYear)
         });
+      } else if (userRole === 'school') {
+        profileData = {
+          schoolName,
+          address: schoolAddress,
+          city: schoolCity,
+          state: schoolState,
+          country: schoolCountry,
+          phoneNumber: schoolPhoneNumber,
+          website: schoolWebsite,
+          schoolType,
+          gradeLevels,
+          accreditations: accreditation,
+          studentCount: Number(studentCount),
+          teacherCount: Number(teacherCount),
+          establishedYear: Number(establishedYear),
+          description: schoolDescription,
+          facilities,
+          extracurricularActivities,
+          socialLinks: schoolSocialLinks
+        };
+        console.log('School profile data:', profileData);
       }
 
       // Update profile data
@@ -285,11 +349,18 @@ const ProfileEditPage: React.FC = () => {
       window.dispatchEvent(new CustomEvent('profileUpdated'));
       
       setSuccess('Profile updated successfully!');
-      
+
       // Force a page reload to ensure fresh data
       setTimeout(() => {
-        window.location.href = '/profile';
+        if (userRole === 'school') {
+          window.location.href = `/schools/by-user/${userId}`;
+        } else {
+          window.location.href = '/profile';
+        }
       }, 1500);
+
+      // Dispatch custom event to notify profile page of update
+      window.dispatchEvent(new CustomEvent('profileUpdated'));
     } catch (err: any) {
       console.error('Save error:', err);
       setError(err.response?.data?.message || 'Failed to update profile');
@@ -316,7 +387,7 @@ const ProfileEditPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <button
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate(userRole === 'school' ? `/schools/${userId}` : '/profile')}
               className="flex items-center text-gray-600 hover:text-orange-600 transition-colors group"
             >
               <ChevronLeft size={20} className="mr-1 group-hover:-translate-x-0.5 transition-transform" />
@@ -498,7 +569,7 @@ const ProfileEditPage: React.FC = () => {
               removeFromArray={removeFromArray}
             />
           ) : userRole === 'student' ? (
-            <StudentEditSection 
+            <StudentEditSection
               interests={interests}
               setInterests={setInterests}
               academicLevel={academicLevel}
@@ -534,6 +605,45 @@ const ProfileEditPage: React.FC = () => {
               addToArray={addToArray}
               removeFromArray={removeFromArray}
             />
+          ) : userRole === 'school' ? (
+            <SchoolEditSection
+              schoolName={schoolName}
+              setSchoolName={setSchoolName}
+              schoolAddress={schoolAddress}
+              setSchoolAddress={setSchoolAddress}
+              schoolCity={schoolCity}
+              setSchoolCity={setSchoolCity}
+              schoolState={schoolState}
+              setSchoolState={setSchoolState}
+              schoolCountry={schoolCountry}
+              setSchoolCountry={setSchoolCountry}
+              schoolPhoneNumber={schoolPhoneNumber}
+              setSchoolPhoneNumber={setSchoolPhoneNumber}
+              schoolWebsite={schoolWebsite}
+              setSchoolWebsite={setSchoolWebsite}
+              schoolType={schoolType}
+              setSchoolType={setSchoolType}
+              gradeLevels={gradeLevels}
+              setGradeLevels={setGradeLevels}
+              accreditation={accreditation}
+              setAccreditation={setAccreditation}
+              studentCount={studentCount}
+              setStudentCount={setStudentCount}
+              teacherCount={teacherCount}
+              setTeacherCount={setTeacherCount}
+              establishedYear={establishedYear}
+              setEstablishedYear={setEstablishedYear}
+              schoolDescription={schoolDescription}
+              setSchoolDescription={setSchoolDescription}
+              facilities={facilities}
+              setFacilities={setFacilities}
+              extracurricularActivities={extracurricularActivities}
+              setExtracurricularActivities={setExtracurricularActivities}
+              socialLinks={schoolSocialLinks}
+              setSocialLinks={setSchoolSocialLinks}
+              addToArray={addToArray}
+              removeFromArray={removeFromArray}
+            />
           ) : (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
               <p>User role not recognized: {userRole}</p>
@@ -551,7 +661,7 @@ const ProfileEditPage: React.FC = () => {
             <div className="flex justify-between items-center">
               <button
                 type="button"
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate(userRole === 'school' ? `/schools/${userId}` : '/profile')}
                 className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition duration-300 flex items-center"
               >
                 <ChevronLeft size={18} className="mr-2" />
@@ -1191,6 +1301,315 @@ const ArrayInputSection: React.FC<{
         >
           <Plus size={18} />
         </button>
+      </div>
+    </div>
+  );
+};
+
+import { Building } from 'lucide-react';
+
+// School Edit Section Component
+const SchoolEditSection: React.FC<{
+  schoolName: string;
+  setSchoolName: (name: string) => void;
+  schoolAddress: string;
+  setSchoolAddress: (address: string) => void;
+  schoolCity: string;
+  setSchoolCity: (city: string) => void;
+  schoolState: string;
+  setSchoolState: (state: string) => void;
+  schoolCountry: string;
+  setSchoolCountry: (country: string) => void;
+  schoolPhoneNumber: string;
+  setSchoolPhoneNumber: (phone: string) => void;
+  schoolWebsite: string;
+  setSchoolWebsite: (website: string) => void;
+  schoolType: string;
+  setSchoolType: (type: string) => void;
+  gradeLevels: string[];
+  setGradeLevels: (levels: string[]) => void;
+  accreditation: string;
+  setAccreditation: (accreditation: string) => void;
+  studentCount: number;
+  setStudentCount: (count: number) => void;
+  teacherCount: number;
+  setTeacherCount: (count: number) => void;
+  establishedYear: number;
+  setEstablishedYear: (year: number) => void;
+  schoolDescription: string;
+  setSchoolDescription: (description: string) => void;
+  facilities: string[];
+  setFacilities: (facilities: string[]) => void;
+  extracurricularActivities: string[];
+  setExtracurricularActivities: (activities: string[]) => void;
+  socialLinks: { facebook?: string; instagram?: string; twitter?: string; linkedin?: string };
+  setSocialLinks: (links: { facebook?: string; instagram?: string; twitter?: string; linkedin?: string }) => void;
+  addToArray: (array: string[], setter: (arr: string[]) => void, value: string) => void;
+  removeFromArray: (array: string[], setter: (arr: string[]) => void, index: number) => void;
+}> = ({
+  schoolName, setSchoolName, schoolAddress, setSchoolAddress, schoolCity, setSchoolCity,
+  schoolState, setSchoolState, schoolCountry, setSchoolCountry, schoolPhoneNumber, setSchoolPhoneNumber,
+  schoolWebsite, setSchoolWebsite, schoolType, setSchoolType, gradeLevels, setGradeLevels,
+  accreditation, setAccreditation, studentCount, setStudentCount, teacherCount, setTeacherCount,
+  establishedYear, setEstablishedYear, schoolDescription, setSchoolDescription,
+  facilities, setFacilities, extracurricularActivities, setExtracurricularActivities,
+  socialLinks, setSocialLinks, addToArray, removeFromArray
+}) => {
+  return (
+    <div className="space-y-8">
+      {/* Basic School Information */}
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-orange-100">
+        <div className="flex items-center mb-6">
+          <Building className="text-orange-500 mr-3" size={24} />
+          <h3 className="text-xl font-bold text-gray-800">Basic School Information</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">School Name</label>
+            <input
+              type="text"
+              value={schoolName}
+              onChange={(e) => setSchoolName(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="Enter school name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">School Type</label>
+            <select
+              value={schoolType}
+              onChange={(e) => setSchoolType(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="">Select school type</option>
+              <option value="public">Public School</option>
+              <option value="private">Private School</option>
+              <option value="charter">Charter School</option>
+              <option value="international">International School</option>
+            </select>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Street Address</label>
+            <input
+              type="text"
+              value={schoolAddress}
+              onChange={(e) => setSchoolAddress(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="Enter street address"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+            <input
+              type="text"
+              value={schoolCity}
+              onChange={(e) => setSchoolCity(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="City"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">State/Province</label>
+            <input
+              type="text"
+              value={schoolState}
+              onChange={(e) => setSchoolState(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="State"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
+            <input
+              type="text"
+              value={schoolCountry}
+              onChange={(e) => setSchoolCountry(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="Country"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+            <input
+              type="tel"
+              value={schoolPhoneNumber}
+              onChange={(e) => setSchoolPhoneNumber(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="School phone number"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
+            <input
+              type="url"
+              value={schoolWebsite}
+              onChange={(e) => setSchoolWebsite(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="https://www.schoolwebsite.com"
+            />
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">School Description</label>
+          <textarea
+            value={schoolDescription}
+            onChange={(e) => setSchoolDescription(e.target.value)}
+            rows={4}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            placeholder="Describe your school, mission, values, and what makes it special..."
+          />
+        </div>
+      </div>
+
+      {/* School Statistics */}
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-orange-100">
+        <div className="flex items-center mb-6">
+          <Users className="text-orange-500 mr-3" size={24} />
+          <h3 className="text-xl font-bold text-gray-800">School Statistics</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Number of Students</label>
+            <input
+              type="number"
+              value={studentCount}
+              onChange={(e) => setStudentCount(Number(e.target.value))}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              min="0"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Number of Teachers</label>
+            <input
+              type="number"
+              value={teacherCount}
+              onChange={(e) => setTeacherCount(Number(e.target.value))}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              min="0"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Year Established</label>
+            <input
+              type="number"
+              value={establishedYear}
+              onChange={(e) => setEstablishedYear(Number(e.target.value))}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              min="1800"
+              max={new Date().getFullYear()}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Accreditation</label>
+            <input
+              type="text"
+              value={accreditation}
+              onChange={(e) => setAccreditation(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="e.g., Ministry of Education"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Grade Levels */}
+      <ArrayInputSection
+        title="Grade Levels Offered"
+        icon={<GraduationCap className="text-orange-500" size={24} />}
+        items={gradeLevels}
+        setItems={setGradeLevels}
+        placeholder="Add grade level (e.g., Kindergarten, Grade 1-12)"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
+
+      {/* Facilities */}
+      <ArrayInputSection
+        title="Facilities & Amenities"
+        icon={<Layout className="text-orange-500" size={24} />}
+        items={facilities}
+        setItems={setFacilities}
+        placeholder="Add facility (e.g., Library, Science Lab, Sports Complex)"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
+
+      {/* Extracurricular Activities */}
+      <ArrayInputSection
+        title="Extracurricular Activities"
+        icon={<Users className="text-orange-500" size={24} />}
+        items={extracurricularActivities}
+        setItems={setExtracurricularActivities}
+        placeholder="Add activity (e.g., Football, Debate Club, Music)"
+        addToArray={addToArray}
+        removeFromArray={removeFromArray}
+      />
+
+      {/* Social Links */}
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-orange-100">
+        <div className="flex items-center mb-6">
+          <Globe className="text-orange-500 mr-3" size={24} />
+          <h3 className="text-xl font-bold text-gray-800">Social Media Links</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Facebook</label>
+            <input
+              type="url"
+              value={socialLinks.facebook || ''}
+              onChange={(e) => setSocialLinks({...socialLinks, facebook: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="https://facebook.com/schoolpage"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Instagram</label>
+            <input
+              type="url"
+              value={socialLinks.instagram || ''}
+              onChange={(e) => setSocialLinks({...socialLinks, instagram: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="https://instagram.com/schoolaccount"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Twitter</label>
+            <input
+              type="url"
+              value={socialLinks.twitter || ''}
+              onChange={(e) => setSocialLinks({...socialLinks, twitter: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="https://twitter.com/schoolhandle"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn</label>
+            <input
+              type="url"
+              value={socialLinks.linkedin || ''}
+              onChange={(e) => setSocialLinks({...socialLinks, linkedin: e.target.value})}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="https://linkedin.com/school/schoolpage"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { 
@@ -13,6 +13,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faNairaSign } from '@fortawesome/free-solid-svg-icons';
 import type { User, TeacherProfile, StudentProfile } from '../types';
+import SchoolProfileView from './SchoolProfileView';
 
 const ProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<User & { profile?: TeacherProfile | StudentProfile } | null>(null);
@@ -20,15 +21,27 @@ const ProfilePage: React.FC = () => {
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const userRole = localStorage.getItem('role');
+  const { id, userId } = useParams<{ id?: string; userId?: string }>();
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(7);
-        console.log('Fetching profile data at:', timestamp);
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/profile/${localStorage.getItem('userId')}?t=${timestamp}&cache=${randomId}&_=${Date.now()}`, {
-          headers: { 
+
+        // Determine which user ID to fetch
+        let targetUserId = localStorage.getItem('userId');
+        if (userId) {
+          // If we're viewing another user's profile (e.g., /schools/by-user/:userId)
+          targetUserId = userId;
+        } else if (id) {
+          // If we're viewing by school ID
+          targetUserId = id;
+        }
+
+        console.log('Fetching profile data for user:', targetUserId);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/profile/${targetUserId}?t=${timestamp}&cache=${randomId}&_=${Date.now()}`, {
+          headers: {
             Authorization: `Bearer ${token}`,
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
@@ -57,7 +70,7 @@ const ProfilePage: React.FC = () => {
       }
     };
     fetchProfile();
-  }, [token, navigate]);
+  }, [token, navigate, id, userId]);
 
   // Also refresh when the component mounts (useful when navigating back from edit)
   // Debounce function to limit refreshProfile calls
@@ -100,8 +113,19 @@ const ProfilePage: React.FC = () => {
       console.log('Refreshing profile data...');
       const timestamp = Date.now();
       const randomId = Math.random().toString(36).substring(7);
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/profile/${localStorage.getItem('userId')}?t=${timestamp}&cache=${randomId}&_=${Date.now()}`, {
-        headers: { 
+
+      // Determine which user ID to fetch
+      let targetUserId = localStorage.getItem('userId');
+      if (userId) {
+        // If we're viewing another user's profile (e.g., /schools/by-user/:userId)
+        targetUserId = userId;
+      } else if (id) {
+        // If we're viewing by school ID
+        targetUserId = id;
+      }
+
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/profile/${targetUserId}?t=${timestamp}&cache=${randomId}&_=${Date.now()}`, {
+        headers: {
           Authorization: `Bearer ${token}`,
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
@@ -170,113 +194,221 @@ const ProfilePage: React.FC = () => {
     );
   }
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="max-w-7xl mx-auto px-4 py-8"
-    >
-      {/* Profile Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl shadow-2xl overflow-hidden mb-10">
-        <div className="p-8 flex flex-col md:flex-row items-center">
-          <div className="relative">
-            <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-white shadow-xl">
-              {profile.profilePicture ? (
-                <img 
-                  src={profile.profilePicture} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-orange-400 flex items-center justify-center text-white font-bold text-4xl">
-                  {profile.name?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-              )}
+  if (profile.role === 'school') {
+  // Get join date (createdAt or similar field)
+  // Try to get from profile.profile, fallback to empty string
+  const createdAt = (profile.profile && (profile.profile as any).createdAt) ? (profile.profile as any).createdAt : '';
+  const joinDate = createdAt ? new Date(createdAt) : null;
+  const joinText = joinDate ? `Joined ${joinDate.toLocaleString('default', { month: 'long', year: 'numeric' })}` : '';
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-7xl mx-auto px-4 py-8"
+      >
+        <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl shadow-2xl overflow-hidden mb-10">
+          <div className="p-8 flex flex-col md:flex-row items-center">
+            <div className="relative">
+              <div className="w-40 h-40 rounded-full border-4 border-white overflow-hidden bg-white shadow-xl">
+                {profile.profilePicture ? (
+                  <img 
+                    src={profile.profilePicture} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-orange-400 flex items-center justify-center text-white font-bold text-4xl">
+                    {profile.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                )}
+                {/* Orange checkmark for verified, optional */}
+                {/* <span className="absolute bottom-2 right-2 bg-orange-500 rounded-full p-1"><CheckCircle className="text-white" size={20} /></span> */}
+              </div>
             </div>
-            <div className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg">
-              <Edit size={18} className="text-orange-500" />
-            </div>
-          </div>
-          
-          <div className="mt-6 md:mt-0 md:ml-8 text-center md:text-left flex-1">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <div>
-                <h1 className="text-3xl font-bold text-white">{profile.name}</h1>
-                <div className="flex items-center justify-center md:justify-start mt-2">
-                  <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-medium capitalize">
-                    {profile.role}
-                  </span>
-                  {profile.role === 'teacher' && (profile.profile as TeacherProfile)?.hourlyRate && (
-                    <span className="ml-3 bg-white/20 px-3 py-1 rounded-full text-sm font-medium flex items-center">
-                      <FontAwesomeIcon icon={faNairaSign} className="inline mr-1" />{(profile.profile as TeacherProfile).hourlyRate}/hr
-                    </span>
+            <div className="mt-6 md:mt-0 md:ml-8 text-center md:text-left flex-1">
+              <div className="flex flex-col md:flex-row justify-between items-center">
+                <div className="flex flex-col items-center md:items-start">
+                  <h1 className="text-4xl font-bold text-white mb-2">{profile.name}</h1>
+                  {profile.bio && (
+                    <p className="text-orange-100 text-lg mb-2 leading-relaxed">{profile.bio}</p>
+                  )}
+                  {joinText && (
+                    <div className="flex items-center text-orange-800 text-lg mb-2">
+                      <Calendar className="mr-2" size={20} />
+                      {joinText}
+                    </div>
                   )}
                 </div>
-              </div>
-              
-              <Link
-                to="/profile/edit"
-                className="mt-4 md:mt-0 bg-white text-orange-600 px-6 py-3 rounded-full hover:bg-amber-50 transition duration-300 font-semibold flex items-center shadow-lg"
-              >
-                <Edit size={18} className="mr-2" />
-                Edit Profile
-              </Link>
-            </div>
-            
-            {profile.bio && (
-              <p className="text-white/90 mt-4 max-w-2xl">
-                {profile.bio}
-              </p>
-            )}
-            
-            <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-6">
-              <div className="flex items-center text-white">
-                <Mail size={18} className="mr-2" />
-                <span>{profile.email}</span>
-              </div>
-              
-              {profile.role === 'teacher' && (profile.profile as TeacherProfile)?.location && (
-                <div className="flex items-center text-white">
-                  <MapPin size={18} className="mr-2" />
-                  <span>{(profile.profile as TeacherProfile).location}</span>
+                <div className="flex flex-col items-end gap-2">
+                  <span className="inline-flex items-center bg-orange-100 text-orange-800 px-4 py-1 rounded-full text-sm font-semibold mb-2">
+                    <BookOpen className="mr-2" size={18} /> School
+                  </span>
+                  <Link
+                    to="/school/profile/edit"
+                    className="bg-orange-500 text-white px-6 py-3 rounded-full hover:bg-orange-600 transition duration-300 font-semibold flex items-center shadow-lg"
+                  >
+                    <Edit size={18} className="mr-2" />
+                    Edit Profile
+                  </Link>
                 </div>
-              )}
-              
-              {profile.role === 'student' && (profile.profile as StudentProfile)?.location && (
-                <div className="flex items-center text-white">
-                  <MapPin size={18} className="mr-2" />
-                  <span>{(profile.profile as StudentProfile).location}</span>
-                </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Profile Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-8">
-          {profile.role === 'teacher' ? (
-            <TeacherProfileView profile={profile.profile as TeacherProfile} />
-          ) : (
-            <StudentProfileView profile={profile.profile as StudentProfile} />
-          )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <SchoolProfileView profile={profile.profile} />
+          </div>
+          <div className="space-y-8">
+            <ContactInfoCard profile={profile} />
+            <ProfileDashboard />
+          </div>
         </div>
-
-        {/* Sidebar */}
-        <div className="space-y-8">
-          <ContactInfoCard profile={profile} />
-          
-          {profile.role === 'teacher' && (
-            <TeacherStatsCard profile={profile.profile as TeacherProfile} />
-          )}
-          
-          <ProfileDashboard />
+      </motion.div>
+    );
+  }
+  // Teacher and Student Profile Rendering
+  if (profile.role === 'teacher') {
+    const teacherProfile = profile.profile as TeacherProfile;
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-7xl mx-auto px-4 py-8"
+      >
+        <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl shadow-2xl overflow-hidden mb-10">
+          <div className="p-8 flex flex-col md:flex-row items-center">
+            <div className="relative">
+              <div className="w-40 h-40 rounded-full border-4 border-white overflow-hidden bg-white shadow-xl">
+                {profile.profilePicture ? (
+                  <img 
+                    src={profile.profilePicture} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-orange-400 flex items-center justify-center text-white font-bold text-4xl">
+                    {profile.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="mt-6 md:mt-0 md:ml-8 text-center md:text-left flex-1">
+              <div className="flex flex-col md:flex-row justify-between items-center">
+                <div className="flex flex-col items-center md:items-start">
+                  <h1 className="text-4xl font-bold text-white mb-2">{profile.name}</h1>
+                  {profile.bio && (
+                    <p className="text-orange-100 text-lg mb-2 leading-relaxed">{profile.bio}</p>
+                  )}
+                  <div className="flex items-center text-orange-800 text-lg mb-2">
+                    <BookOpen className="mr-2" size={20} />
+                    Teacher
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <Link
+                    to="/profile/edit"
+                    className="bg-orange-500 text-white px-6 py-3 rounded-full hover:bg-orange-600 transition duration-300 font-semibold flex items-center shadow-lg"
+                  >
+                    <Edit size={18} className="mr-2" />
+                    Edit Profile
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <TeacherProfileView profile={teacherProfile} />
+          </div>
+          <div className="space-y-8">
+            <ContactInfoCard profile={profile} />
+            <TeacherStatsCard profile={teacherProfile} />
+            <ProfileDashboard />
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (profile.role === 'student') {
+    const studentProfile = profile.profile as StudentProfile;
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-7xl mx-auto px-4 py-8"
+      >
+        <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl shadow-2xl overflow-hidden mb-10">
+          <div className="p-8 flex flex-col md:flex-row items-center">
+            <div className="relative">
+              <div className="w-40 h-40 rounded-full border-4 border-white overflow-hidden bg-white shadow-xl">
+                {profile.profilePicture ? (
+                  <img 
+                    src={profile.profilePicture} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-orange-400 flex items-center justify-center text-white font-bold text-4xl">
+                    {profile.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="mt-6 md:mt-0 md:ml-8 text-center md:text-left flex-1">
+              <div className="flex flex-col md:flex-row justify-between items-center">
+                <div className="flex flex-col items-center md:items-start">
+                  <h1 className="text-4xl font-bold text-white mb-2">{profile.name}</h1>
+                  {profile.bio && (
+                    <p className="text-orange-100 text-lg mb-2 leading-relaxed">{profile.bio}</p>
+                  )}
+                  <div className="flex items-center text-orange-800 text-lg mb-2">
+                    <GraduationCap className="mr-2" size={20} />
+                    Student
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <Link
+                    to="/profile/edit"
+                    className="bg-orange-500 text-white px-6 py-3 rounded-full hover:bg-orange-600 transition duration-300 font-semibold flex items-center shadow-lg"
+                  >
+                    <Edit size={18} className="mr-2" />
+                    Edit Profile
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <StudentProfileView profile={studentProfile} />
+          </div>
+          <div className="space-y-8">
+            <ContactInfoCard profile={profile} />
+            <ProfileDashboard />
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Fallback for unknown roles
+  return (
+    <div className="max-w-4xl mx-auto mt-10 p-4">
+      <div className="bg-gradient-to-r from-orange-400 to-amber-500 rounded-2xl p-8 text-center text-white">
+        <BookOpen size={64} className="mx-auto mb-4" />
+        <h1 className="text-3xl font-bold mb-4">Profile Not Supported</h1>
+        <p className="text-xl mb-6 max-w-2xl mx-auto">
+          Your user role is not supported for profile display. Please contact support if this is unexpected.
+        </p>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

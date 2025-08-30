@@ -12,10 +12,16 @@ import type { Post } from '../types';
 // Define UserProfile interface for type safety
 interface UserProfile {
   id: string;
-  role: 'teacher' | 'student';
+  role: 'teacher' | 'student' | 'school';
+  name?: string;
   profile: {
     subjects?: string[];
     interests?: string[];
+    schoolName?: string;
+    city?: string;
+    country?: string;
+    address?: string;
+    state?: string;
     [key: string]: any; // For additional fields
   };
 }

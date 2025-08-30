@@ -33,13 +33,13 @@ const Footer: React.FC = () => {
             <h3 className="text-lg font-bold mb-6">Menu</h3>
             <div className="grid grid-cols-2 gap-8">
               <ul className="space-y-3">
-                <li><a href="/register" className="text-gray-400 hover:text-orange-400 transition-colors">Feed</a></li>
-                <li><a href="/register" className="text-gray-400 hover:text-orange-400 transition-colors">Messages</a></li>
-                <li><a href="/register" className="text-gray-400 hover:text-orange-400 transition-colors">Profile</a></li>
+                <li><a href="/home" className="text-gray-400 hover:text-orange-400 transition-colors">Feed</a></li>
+                <li><a href="/messages" className="text-gray-400 hover:text-orange-400 transition-colors">Messages</a></li>
+                <li><a href="/profile" className="text-gray-400 hover:text-orange-400 transition-colors">Profile</a></li>
               </ul>
               <ul className="space-y-3">
-                <li><a href="/register" className="text-gray-400 hover:text-orange-400 transition-colors">Teachers</a></li>
-                <li><a href="/register" className="text-gray-400 hover:text-orange-400 transition-colors">Students</a></li>
+                <li><a href="/schools" className="text-gray-400 hover:text-orange-400 transition-colors">Schools</a></li>
+                <li><a href="/school/register" className="text-gray-400 hover:text-orange-400 transition-colors">School Registration</a></li>
               </ul>
             </div>
           </div>

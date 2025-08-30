@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import type { User, TeacherProfile, StudentProfile } from '../../types';
+import type { User, TeacherProfile, StudentProfile, SchoolProfile } from '../../types';
 
 interface ProfileDashboardProps {
-  profile: User & { profile?: TeacherProfile | StudentProfile };
+  profile: User & { profile?: TeacherProfile | StudentProfile | SchoolProfile };
 }
 
 const ProfileDashboard: React.FC<ProfileDashboardProps> = ({ profile }) => {

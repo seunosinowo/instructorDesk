@@ -2,19 +2,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import { 
-  Home, 
-  MessageSquare, 
-  User, 
+import {
+  Home,
+  MessageSquare,
+  User,
   Settings,
   Edit3,
   LogOut,
   Menu,
-  X
+  X,
+  Building,
+  Users,
 } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const isAuthenticated = !!localStorage.getItem('token');
+  const userRole = localStorage.getItem('role');
   const navigate = useNavigate();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -92,17 +95,24 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-6">
             {!isAuthenticated ? (
               <>
-                <Link 
-                  to="/login" 
+                <Link
+                  to="/login"
                   className="hover:text-orange-secondary transition-colors duration-300 font-medium px-3 py-2 rounded-lg hover:bg-white/10"
                 >
                   Sign In
                 </Link>
-                <Link 
-                  to="/register" 
-                  className="bg-white text-orange-primary px-6 py-2 rounded-full hover:bg-gray-100 font-medium transition-all duration-300 shadow-md hover:shadow-lg"
+                <Link
+                  to="/register"
+                  className="hover:text-orange-secondary transition-colors duration-300 font-medium px-3 py-2 rounded-lg hover:bg-white/10"
                 >
                   Sign Up
+                </Link>
+                <Link
+                  to="/school/register"
+                  className="bg-white text-orange-primary px-4 py-2 rounded-full hover:bg-gray-100 font-medium transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2"
+                >
+                  <Building size={16} />
+                  School Registration
                 </Link>
               </>
             ) : (
@@ -110,6 +120,10 @@ const Navbar: React.FC = () => {
                 <div className="flex items-center space-x-5">
                   <NavLink to="/home" icon={<Home size={20} />} label="Home" />
                   <NavLink to="/messages" icon={<MessageSquare size={20} />} label="Messages" />
+                  <NavLink to="/discussions" icon={<Users size={20} />} label="Discussions" />
+                  {(userRole === 'teacher' || userRole === 'student') && (
+                    <NavLink to="/schools" icon={<Building size={20} />} label="Schools" />
+                  )}
                   <NavLink to="/profile" icon={<User size={20} />} label="Profile" />
                 </div>
                 
@@ -230,19 +244,27 @@ const Navbar: React.FC = () => {
             <div className="container mx-auto px-4 py-3">
               {!isAuthenticated ? (
                 <div className="flex flex-col space-y-4 py-4">
-                  <Link 
+                  <Link
                     to="/login"
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center justify-center hover:text-orange-secondary transition-colors duration-300 font-medium px-3 py-3 rounded-lg hover:bg-white/10"
                   >
                     Sign In
                   </Link>
-                  <Link 
+                  <Link
                     to="/register"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="bg-white text-orange-primary px-6 py-3 rounded-full hover:bg-gray-100 font-medium transition-all duration-300 shadow-md hover:shadow-lg text-center"
+                    className="flex items-center justify-center hover:text-orange-secondary transition-colors duration-300 font-medium px-3 py-3 rounded-lg hover:bg-white/10"
                   >
                     Sign Up
+                  </Link>
+                  <Link
+                    to="/school/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="bg-white text-orange-primary px-6 py-3 rounded-full hover:bg-gray-100 font-medium transition-all duration-300 shadow-md hover:shadow-lg text-center flex items-center justify-center gap-2"
+                  >
+                    <Building size={16} />
+                    School Registration
                   </Link>
                 </div>
               ) : (
@@ -263,32 +285,46 @@ const Navbar: React.FC = () => {
                   
                   <div className="grid grid-cols-2 gap-4 py-6">
                     {/* Dashboard removed for authenticated users */}
-                    <MobileNavLink 
-                      to="/home" 
+                    <MobileNavLink
+                      to="/home"
                       icon={<Home size={24} />}
                       label="Home"
                       onClick={() => setMobileMenuOpen(false)}
                     />
-                    <MobileNavLink 
-                      to="/messages" 
+                    <MobileNavLink
+                      to="/messages"
                       icon={<MessageSquare size={24} />}
                       label="Messages"
                       onClick={() => setMobileMenuOpen(false)}
                     />
-                    <MobileNavLink 
-                      to="/profile" 
+                    <MobileNavLink
+                      to="/discussions"
+                      icon={<Users size={24} />}
+                      label="Discussions"
+                      onClick={() => setMobileMenuOpen(false)}
+                    />
+                    {(userRole === 'teacher' || userRole === 'student') && (
+                      <MobileNavLink
+                        to="/schools"
+                        icon={<Building size={24} />}
+                        label="Schools"
+                        onClick={() => setMobileMenuOpen(false)}
+                      />
+                    )}
+                    <MobileNavLink
+                      to="/profile"
                       icon={<User size={24} />}
                       label="Profile"
                       onClick={() => setMobileMenuOpen(false)}
                     />
-                    <MobileNavLink 
-                      to="/profile/edit" 
+                    <MobileNavLink
+                      to="/profile/edit"
                       icon={<Edit3 size={24} />}
                       label="Edit Profile"
                       onClick={() => setMobileMenuOpen(false)}
                     />
-                    <MobileNavLink 
-                      to="/profile/settings" 
+                    <MobileNavLink
+                      to="/profile/settings"
                       icon={<Settings size={24} />}
                       label="Settings"
                       onClick={() => setMobileMenuOpen(false)}

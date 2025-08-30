@@ -7,7 +7,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'teacher' | 'student';
+  role: 'teacher' | 'student' | 'school';
   bio?: string;
   profilePicture?: string;
   profile: any;
@@ -63,7 +63,12 @@ const ProfileBrowser: React.FC = () => {
   };
 
   const getRoleIcon = (role: string) => {
-    return role === 'teacher' ? '👨‍🏫' : '👨‍🎓';
+    switch (role) {
+      case 'teacher': return '👨‍🏫';
+      case 'student': return '👨‍🎓';
+      case 'school': return '🏫';
+      default: return '👤';
+    }
   };
 
   const getProfileHighlight = (user: User) => {
@@ -71,6 +76,8 @@ const ProfileBrowser: React.FC = () => {
       return user.profile.subjects.slice(0, 3).join(', ');
     } else if (user.role === 'student' && user.profile.interests) {
       return user.profile.interests.slice(0, 3).join(', ');
+    } else if (user.role === 'school' && user.profile.schoolType) {
+      return `${user.profile.schoolType} school`;
     }
     return 'No details available';
   };
@@ -108,6 +115,7 @@ const ProfileBrowser: React.FC = () => {
             <option value="all">All Users</option>
             <option value="teacher">Teachers</option>
             <option value="student">Students</option>
+            <option value="school">Schools</option>
           </select>
         </div>
       </div>
@@ -130,7 +138,7 @@ const ProfileBrowser: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   whileHover={{ scale: 1.02 }}
                   className="bg-gradient-to-br from-white to-gray-50 rounded-lg border border-gray-200 p-4 cursor-pointer hover:shadow-lg transition-all duration-200 relative h-56 flex flex-col"
-                  onClick={() => navigate(`/profile/${user.id}`)}
+                  onClick={() => navigate(user.role === 'school' ? `/schools/by-user/${user.id}` : `/profile/${user.id}`)}
                 >
                   {/* Your Profile indicator */}
                   {isCurrentUser && (
@@ -156,7 +164,7 @@ const ProfileBrowser: React.FC = () => {
                     </div>
 
                     {/* User Info */}
-                    <h3 className="font-semibold text-gray-800 mb-1 truncate w-full">{user.name}</h3>
+                    <h3 className="font-semibold text-white mb-1 truncate w-full">{user.name}</h3>
                     <div className="flex items-center space-x-1 mb-1">
                       <span className="text-lg">{getRoleIcon(user.role)}</span>
                       <span className="text-sm text-gray-600 capitalize">{user.role}</span>
@@ -173,7 +181,7 @@ const ProfileBrowser: React.FC = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/profile/${user.id}`);
+                        navigate(user.role === 'school' ? `/schools/by-user/${user.id}` : `/profile/${user.id}`);
                       }}
                       className="w-full bg-orange-primary text-white py-1.5 px-3 rounded-md hover:bg-orange-secondary transition-colors text-sm font-medium mt-1"
                     >

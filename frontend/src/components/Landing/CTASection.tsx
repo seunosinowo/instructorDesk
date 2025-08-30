@@ -36,12 +36,19 @@ const CTASection: React.FC = () => {
             whileInView={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.5 }}
             viewport={{ once: true }}
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
-            <Link 
-              to="/register" 
+            <Link
+              to="/register"
               className="inline-block bg-white text-orange-600 px-8 py-4 rounded-xl text-lg font-bold hover:bg-amber-50 transition-all duration-300 shadow-lg hover:shadow-xl"
             >
-              Get Started for Free
+              Join as Student/Teacher
+            </Link>
+            <Link
+              to="/school/register"
+              className="inline-block border-2 border-white text-white px-8 py-4 rounded-xl text-lg font-bold hover:bg-white hover:text-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              Register Your School
             </Link>
           </motion.div>
         </div>

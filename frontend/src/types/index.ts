@@ -6,7 +6,7 @@ export interface User {
   bio: string;
   profileCompleted: boolean;
   profilePicture?: string;
-  profile?: TeacherProfile | StudentProfile;
+  profile?: TeacherProfile | StudentProfile | SchoolProfile;
 }
 
 export interface TeacherProfile {
@@ -59,12 +59,41 @@ export interface StudentProfile {
   };
 }
 
+export interface SchoolProfile {
+  id?: string;
+  userId: string;
+  schoolName: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode?: string;
+  phoneNumber?: string;
+  website?: string;
+  accreditations?: string;
+  schoolType: 'public' | 'private' | 'charter' | 'international';
+  gradeLevels: string[];
+  studentCount?: number;
+  teacherCount?: number;
+  establishedYear?: number;
+  description?: string;
+  facilities?: string[];
+  extracurricularActivities?: string[];
+  socialLinks?: {
+    facebook?: string;
+    twitter?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
+}
+
 export interface Post {
   id: string;
   userId: string;
   content: string;
   type: 'general' | 'educational' | 'job' | 'learning' | 'achievement' | 'question';
   imageUrl?: string;
+  videoUrl?: string;
   likesCount: number;
   commentsCount: number;
   createdAt: string;
@@ -100,6 +129,7 @@ export interface Comment {
   user?: {
     id: string;
     name: string;
+    role: string;
     profilePicture?: string;
   };
 }
