@@ -20,6 +20,9 @@ import { errorMiddleware } from './middleware/errorMiddleware';
 
 const app = express();
 
+// Trust proxy for accurate IP detection behind reverse proxies (e.g., Render)
+app.set('trust proxy', true);
+
 app.use(cors({
 	origin: [
 		'http://localhost:3000',
