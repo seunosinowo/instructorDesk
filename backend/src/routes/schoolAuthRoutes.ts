@@ -8,11 +8,6 @@ import { authMiddleware } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-// Validate environment variables
-if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET is not defined in environment variables');
-}
-
 // Email validation helper
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
