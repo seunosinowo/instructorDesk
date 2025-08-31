@@ -34,7 +34,14 @@ app.use(cors({
 }));
 app.use(helmet());
 app.use(morgan('dev'));
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 1000 }));
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // limit each IP to 1000 requests per windowMs
+  keyGenerator: (req) => {
+    // Use the first IP from X-Forwarded-For if trust proxy is set, otherwise use req.ip
+    return req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() || req.ip || 'unknown';
+  }
+}));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
