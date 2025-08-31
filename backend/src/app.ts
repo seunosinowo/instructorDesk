@@ -20,9 +20,6 @@ import { errorMiddleware } from './middleware/errorMiddleware';
 
 const app = express();
 
-// Trust proxy for accurate IP detection behind reverse proxies (e.g., Render)
-app.set('trust proxy', true);
-
 app.use(cors({
 	origin: [
 		'http://localhost:3000',
@@ -34,15 +31,19 @@ app.use(cors({
 }));
 app.use(helmet());
 app.use(morgan('dev'));
-// Temporarily disable rate limiting to isolate the issue
-// app.use(rateLimit({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   max: 1000, // limit each IP to 1000 requests per windowMs
-//   keyGenerator: (req) => {
-//     // Use the first IP from X-Forwarded-For if trust proxy is set, otherwise use req.ip
-//     return req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() || req.ip || 'unknown';
-//   }
-// }));
+
+// Trust proxy for accurate IP detection behind reverse proxies (e.g., Render)
+app.set('trust proxy', 1); // Trust first proxy
+
+// Rate limiting with proper proxy handling
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // limit each IP to 1000 requests per windowMs
+  keyGenerator: (req) => {
+    // Use the first IP from X-Forwarded-For if trust proxy is set, otherwise use req.ip
+    return req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() || req.ip || 'unknown';
+  }
+}));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);

@@ -7,15 +7,29 @@ import './models'; // Import models to ensure associations are set up
 
 sequelize.authenticate()
   .then(() => console.log('Database connected'))
-  .then(() => {
-    // Only sync in development, and only if tables don't exist
-    if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
-      return sequelize.sync({ alter: true });
-    }
-  })
-  .then(() => {
-    if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
-      console.log('Database synchronized');
+  .then(async () => {
+    // Check if tables exist and sync if needed
+    try {
+      const [results] = await sequelize.query(`
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name IN ('Users', 'Schools')
+      `);
+
+      const existingTables = results.map((row: any) => row.table_name);
+      const missingTables = ['Users', 'Schools'].filter(table => !existingTables.includes(table));
+
+      if (missingTables.length > 0) {
+        console.log(`Missing tables: ${missingTables.join(', ')}. Running sync...`);
+        await sequelize.sync({ alter: true });
+        console.log('Database synchronized');
+      } else {
+        console.log('All required tables exist');
+      }
+    } catch (syncError) {
+      console.error('Error checking/syncing database:', syncError);
+      // Don't fail the server startup for sync errors
     }
   })
   .catch(err => {
