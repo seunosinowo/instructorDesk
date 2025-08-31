@@ -187,28 +187,6 @@ The backend provides comprehensive RESTful API endpoints organized by functional
 ### Administrative
 - **`/api/school-auth/*`**: School-specific authentication flows
 
-
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature-name`
-3. Commit your changes: `git commit -m 'Add some feature'`
-4. Push to the branch: `git push origin feature/your-feature-name`
-5. Open a pull request
-
-## Environment Variables
-
-### Backend
-- `DATABASE_URL`: PostgreSQL connection string
-- `JWT_SECRET`: Secret key for JWT token generation
-- `CLOUDINARY_*`: Cloudinary configuration for file uploads
-- `EMAIL_USER` & `EMAIL_PASS`: Email service credentials
-- `FRONTEND_URL`: Frontend application URL for CORS
-
-### Frontend
-- No additional environment variables required for development
-
 ## Security Features
 
 - **Rate Limiting**: Prevents abuse with request rate limiting
