@@ -25,7 +25,7 @@ const HeroSection: React.FC = () => {
             className="lg:w-1/2 w-full text-center lg:text-left flex flex-col items-center lg:items-start"
           >
             <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-6 leading-tight text-center lg:text-left max-w-full">
-              Connect. Learn. Grow with <span className="text-amber-500">Teacherrs</span>
+              Connect. Learn. Grow with <span className="text-amber-500">Teechha</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl text-center lg:text-left mx-auto lg:mx-0">
               The professional network dedicated entirely to education. Find teachers, connect with students, and build your academic community.

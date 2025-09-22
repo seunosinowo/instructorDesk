@@ -88,7 +88,7 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between items-center">
           <Link to="/" className="text-3xl font-bold tracking-tight flex items-center">
             <span className="bg-white text-orange-primary px-3 py-1 rounded-lg mr-2">T</span>
-            <span>eacherrs</span>
+            <span>eechha</span>
           </Link>
 
           {/* Desktop Navigation */}

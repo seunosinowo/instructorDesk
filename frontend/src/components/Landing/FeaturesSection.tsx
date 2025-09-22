@@ -53,7 +53,7 @@ const FeaturesSection: React.FC = () => {
             viewport={{ once: true }}
             className="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
           >
-            Why Choose <span className="text-orange-600">Teacherrs</span>
+            Why Choose <span className="text-orange-600">Teechha</span>
           </motion.h2>
           <motion.p 
             initial={{ y: 20, opacity: 0 }}

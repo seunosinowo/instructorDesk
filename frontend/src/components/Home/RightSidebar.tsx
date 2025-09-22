@@ -121,7 +121,7 @@ const RightSidebar: React.FC = () => {
       >
         <div className="flex items-center mb-3">
           <MessageCircle className="text-orange-500 mr-2" size={20} />
-          <h4 className="font-bold text-gray-800">About Teacherrs</h4>
+          <h4 className="font-bold text-gray-800">About Teechha</h4>
         </div>
         
         <p className="text-sm text-gray-600 mb-4">
@@ -151,7 +151,7 @@ const RightSidebar: React.FC = () => {
         
         <div className="mt-4 pt-4 border-t border-gray-100">
           <p className="text-xs text-gray-500">
-            © 2025 Teacherrs • Making education accessible
+            © 2025 Teechha • Making education accessible
           </p>
         </div>
       </motion.div>
